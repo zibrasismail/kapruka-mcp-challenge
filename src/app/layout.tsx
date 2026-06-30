@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
-import { GeistMono } from "geist/font/mono";
-import { Noto_Sans_Sinhala } from "next/font/google";
+import { Google_Sans, Noto_Sans_Sinhala } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
+
+const googleSans = Google_Sans({
+  subsets: ["latin"],
+  variable: "--font-google-sans",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
 
 const notoSinhala = Noto_Sans_Sinhala({
   subsets: ["sinhala"],
@@ -38,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${GeistMono.variable} ${notoSinhala.variable} ${GeistMono.className}`}
+      className={`${googleSans.variable} ${notoSinhala.variable} ${googleSans.className}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
