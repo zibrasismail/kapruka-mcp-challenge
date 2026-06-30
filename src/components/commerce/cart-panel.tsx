@@ -5,6 +5,7 @@ import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCartStore } from "@/lib/store/cart-store";
+import { useCartHydrated } from "@/lib/hooks/use-cart-hydrated";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { formatLKR, cn } from "@/lib/utils";
 
@@ -15,12 +16,14 @@ interface CartPanelProps {
 
 export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
   const isMobile = useIsMobile();
+  const cartHydrated = useCartHydrated();
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
   const clearCart = useCartStore((s) => s.clearCart);
   const total = useCartStore((s) => s.total);
   const itemCount = useCartStore((s) => s.itemCount);
+  const count = cartHydrated ? itemCount() : 0;
 
   return (
     <Sheet>
@@ -30,13 +33,14 @@ export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
             "touch-target relative flex items-center justify-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-2 text-sm font-medium backdrop-blur-sm transition hover:bg-card sm:px-4",
             triggerClassName
           )}
-          aria-label={`Cart${itemCount() > 0 ? `, ${itemCount()} items` : ""}`}
+          aria-label={`Cart${count > 0 ? `, ${count} items` : ""}`}
+          suppressHydrationWarning
         >
           <ShoppingBag className="size-4" />
           <span className="hidden sm:inline">Cart</span>
-          {itemCount() > 0 && (
+          {count > 0 && (
             <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground sm:static sm:size-5">
-              {itemCount()}
+              {count}
             </span>
           )}
         </button>

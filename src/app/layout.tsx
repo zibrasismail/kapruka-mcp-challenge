@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { DM_Sans, Playfair_Display, Noto_Sans_Sinhala } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme/theme-provider";
@@ -42,10 +43,10 @@ const themeInitScript = `(function(){try{var t=localStorage.getItem("theme")||"s
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
       <body className={`${dmSans.variable} ${playfair.variable} ${notoSinhala.variable} antialiased`}>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeInitScript}
+        </Script>
         <ThemeProvider>
           {children}
           <Toaster
