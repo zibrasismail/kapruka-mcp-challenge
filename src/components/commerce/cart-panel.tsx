@@ -46,22 +46,24 @@ export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
         </button>
       </SheetTrigger>
       <SheetContent side={isMobile ? "bottom" : "right"}>
-        <div className="flex h-full flex-col">
-          <h2 className="font-display text-xl font-semibold">Your Cart</h2>
-          <p className="text-sm text-muted-foreground">
+        <div className="flex h-full min-h-0 flex-col">
+          <h2 className="pr-8 font-display text-lg font-semibold leading-tight sm:text-xl">Your Cart</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
             {items.length === 0 ? "Empty — let's find something special!" : `${itemCount()} items`}
           </p>
 
-          <div className="mt-4 flex-1 overflow-y-auto">
+          <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
             {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-16 text-center text-muted-foreground">
+              <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center text-muted-foreground sm:py-16">
                 <ShoppingBag className="size-12 opacity-30" />
-                <p className="text-sm">Ask Saama to find gifts for any occasion</p>
+                <p className="max-w-[16rem] text-sm leading-relaxed">
+                  Ask Saama to find gifts for any occasion
+                </p>
               </div>
             ) : (
-              <ul className="flex flex-col gap-4">
+              <ul className="flex flex-col gap-3 sm:gap-4">
                 {items.map((item) => (
-                  <li key={item.productId} className="flex gap-3 rounded-xl border border-border/50 p-3">
+                  <li key={item.productId} className="flex gap-3 rounded-xl border border-border/50 p-3.5 sm:p-3">
                     <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
                       {item.image ? (
                         <Image src={item.image} alt={item.name} fill className="object-cover" unoptimized />
@@ -71,8 +73,8 @@ export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-1 flex-col gap-1">
-                      <p className="line-clamp-2 text-sm font-medium">{item.name}</p>
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <p className="line-clamp-2 text-sm font-medium leading-snug">{item.name}</p>
                       <p className="text-sm font-semibold text-primary">{formatLKR(item.price)}</p>
                       <div className="mt-auto flex items-center gap-2">
                         <button
@@ -106,8 +108,8 @@ export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
           </div>
 
           {items.length > 0 && (
-            <div className="mt-4 border-t border-border pt-4">
-              <div className="mb-4 flex justify-between text-lg font-semibold">
+            <div className="mt-4 shrink-0 border-t border-border pt-4">
+              <div className="mb-4 flex items-center justify-between text-base font-semibold sm:text-lg">
                 <span>Total</span>
                 <span className="text-primary">{formatLKR(total())}</span>
               </div>

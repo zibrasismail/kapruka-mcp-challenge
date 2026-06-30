@@ -49,13 +49,13 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
   const hasOverflow = canScrollLeft || canScrollRight;
 
   return (
-    <div className="-mx-3 mt-3 w-[calc(100%+1.5rem)] sm:mx-0 sm:mt-4 sm:w-full">
-      <div className="mb-2 flex items-center justify-between gap-2 px-3 sm:px-1">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:text-xs">
+    <div className="full-bleed-mobile mt-4 sm:mt-5">
+      <div className="content-padding mb-2.5 flex items-center justify-between gap-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-xs sm:tracking-wider">
           Products found · {products.length}
         </p>
         {hasOverflow && (
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <Button
               type="button"
               variant="outline"
@@ -85,13 +85,13 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
       <div className="relative">
         {hasOverflow && canScrollLeft && (
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-background to-transparent sm:w-8"
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r from-background to-transparent sm:w-8"
             aria-hidden
           />
         )}
         {hasOverflow && canScrollRight && (
           <div
-            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-background to-transparent sm:w-8"
+            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l from-background to-transparent sm:w-8"
             aria-hidden
           />
         )}
@@ -100,7 +100,8 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
           ref={trackRef}
           className={cn(
             "carousel-track flex gap-3 overflow-x-auto pb-2 pt-0.5 snap-x snap-mandatory",
-            "px-3 scroll-px-3 sm:px-1 sm:scroll-px-4"
+            "content-padding scroll-px-[max(1rem,env(safe-area-inset-left))]",
+            "sm:scroll-px-6"
           )}
         >
           {products.map((product, i) => (

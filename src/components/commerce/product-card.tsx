@@ -36,7 +36,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08 }}
       data-product-card
-      className="flex w-[min(72vw,14rem)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:w-56"
+      className="flex w-[min(68vw,13.5rem)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:w-56"
     >
       <div className="relative aspect-[4/5] bg-muted sm:aspect-square">
         {product.image ? (
@@ -45,7 +45,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
             alt={product.name}
             fill
             className="object-cover"
-            sizes="(max-width: 640px) 72vw, 224px"
+            sizes="(max-width: 640px) 68vw, 224px"
             unoptimized
           />
         ) : (
@@ -54,11 +54,11 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-3">
-        <h3 className="line-clamp-2 text-sm font-medium leading-snug">{product.name}</h3>
-        <p className="text-base font-semibold text-primary">{formatLKR(product.price)}</p>
+      <div className="flex flex-1 flex-col gap-2 p-3.5 sm:p-3">
+        <h3 className="line-clamp-2 text-sm font-medium leading-snug sm:text-sm">{product.name}</h3>
+        <p className="text-sm font-semibold text-primary sm:text-base">{formatLKR(product.price)}</p>
         <div className="mt-auto flex gap-2">
-          <Button size="sm" className="h-9 flex-1" onClick={handleAdd}>
+          <Button size="sm" className="h-10 flex-1 text-sm sm:h-9" onClick={handleAdd}>
             <Plus className="size-3.5" />
             Add
           </Button>

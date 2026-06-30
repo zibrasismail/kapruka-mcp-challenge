@@ -160,6 +160,34 @@ body::before {
   padding-right: max(1rem, env(safe-area-inset-right));
 }
 
+.content-padding {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+@media (min-width: 640px) {
+  .content-padding {
+    padding-left: max(1.5rem, env(safe-area-inset-left));
+    padding-right: max(1.5rem, env(safe-area-inset-right));
+  }
+}
+
+.full-bleed-mobile {
+  margin-left: calc(-1 * max(1rem, env(safe-area-inset-left)));
+  margin-right: calc(-1 * max(1rem, env(safe-area-inset-right)));
+  width: calc(
+    100% + max(1rem, env(safe-area-inset-left)) + max(1rem, env(safe-area-inset-right))
+  );
+}
+
+@media (min-width: 640px) {
+  .full-bleed-mobile {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+  }
+}
+
 .touch-target {
   min-height: 2.75rem;
   min-width: 2.75rem;
@@ -167,8 +195,16 @@ body::before {
 
 /* Saama assistant markdown */
 .saama-markdown {
-  line-height: 1.6;
+  line-height: 1.65;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+@media (min-width: 640px) {
+  .saama-markdown {
+    font-size: 0.9375rem;
+  }
 }
 
 .saama-markdown > *:first-child {
@@ -212,7 +248,14 @@ body::before {
 .saama-markdown ul,
 .saama-markdown ol {
   margin: 0.5rem 0;
-  padding-left: 1.25rem;
+  padding-left: 1.125rem;
+}
+
+@media (min-width: 640px) {
+  .saama-markdown ul,
+  .saama-markdown ol {
+    padding-left: 1.25rem;
+  }
 }
 
 .saama-markdown li {

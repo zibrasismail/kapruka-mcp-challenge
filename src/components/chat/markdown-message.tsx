@@ -45,8 +45,8 @@ export function MarkdownMessage({
             );
           },
           table: ({ children }) => (
-            <div className="my-3 -mx-1 max-w-[calc(100%+0.5rem)] overflow-x-auto rounded-xl border border-border/60">
-              <table className="w-full min-w-[260px] border-collapse text-left text-xs sm:min-w-[280px] sm:text-sm">
+            <div className="my-3 -mx-1 max-w-full overflow-x-auto rounded-xl border border-border/60">
+              <table className="w-full min-w-[240px] border-collapse text-left text-xs sm:min-w-[280px] sm:text-sm">
                 {children}
               </table>
             </div>
@@ -55,10 +55,10 @@ export function MarkdownMessage({
             <thead className="border-b border-border/60 bg-muted/50">{children}</thead>
           ),
           th: ({ children }) => (
-            <th className="px-3 py-2 font-semibold text-foreground">{children}</th>
+            <th className="px-2.5 py-2 font-semibold text-foreground sm:px-3">{children}</th>
           ),
           td: ({ children }) => (
-            <td className="border-t border-border/40 px-3 py-2 align-top text-foreground/90">
+            <td className="border-t border-border/40 px-2.5 py-2 align-top text-foreground/90 sm:px-3">
               {children}
             </td>
           ),

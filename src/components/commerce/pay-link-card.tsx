@@ -15,21 +15,21 @@ export function PayLinkCard({ text }: { text: string }) {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="my-3 rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-amber-500/5 p-4 sm:p-5"
+      className="my-3 rounded-2xl border-2 border-primary/30 bg-linear-to-br from-primary/5 to-amber-500/5 p-4 sm:p-5"
     >
-      <div className="flex items-center gap-2 text-primary">
+      <div className="flex items-center gap-2.5 text-primary">
         <CreditCard className="size-5 shrink-0" />
-        <h3 className="font-display text-base font-semibold sm:text-lg">Order Ready!</h3>
+        <h3 className="font-display text-base font-semibold leading-tight sm:text-lg">Order Ready!</h3>
       </div>
       {orderMatch && (
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Order #{orderMatch[1]}
         </p>
       )}
-      <p className="mt-2 text-sm">
+      <p className="mt-2 text-sm leading-relaxed">
         Your prices are locked for 60 minutes. Click below to complete payment on Kapruka.
       </p>
-      <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+      <div className="mt-2 flex items-center gap-1.5 text-xs leading-relaxed text-muted-foreground">
         <Clock className="size-3.5" />
         Pay link expires in 60 minutes
       </div>

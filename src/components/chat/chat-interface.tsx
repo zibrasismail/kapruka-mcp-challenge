@@ -97,7 +97,7 @@ export function ChatInterface() {
 
   return (
     <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background">
-      <header className="safe-top z-10 flex shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-card/70 px-3 py-2.5 backdrop-blur-xl sm:px-6 sm:py-3">
+      <header className="safe-top content-padding z-10 flex shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-card/70 py-3 backdrop-blur-xl sm:py-3.5">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md sm:size-10 sm:rounded-2xl">
             <Sparkles className="size-4 sm:size-5" />
@@ -106,7 +106,7 @@ export function ChatInterface() {
             <h1 className="truncate font-display text-base font-semibold leading-tight sm:text-lg">
               Kapruka <span className="text-primary">Saama</span>
             </h1>
-            <p className="truncate text-[10px] text-muted-foreground sm:text-[11px]">සමා · Gift Concierge</p>
+            <p className="truncate text-xs text-muted-foreground sm:text-[11px]">සමා · Gift Concierge</p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -120,26 +120,30 @@ export function ChatInterface() {
 
       <div
         ref={scrollRef}
-        className="chat-scroll mx-auto min-h-0 w-full max-w-3xl flex-1 overflow-y-auto overscroll-y-contain px-3 py-4 sm:px-6 sm:py-6"
+        className="chat-scroll content-padding mx-auto min-h-0 w-full max-w-3xl flex-1 overflow-y-auto overscroll-y-contain py-4 sm:py-6"
       >
-          {messages.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 px-1 text-center sm:mb-8"
-            >
-              <h2 className="font-display text-2xl font-bold tracking-tight sm:text-4xl">
-                {WELCOME.title}
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground sm:text-base">{WELCOME.subtitle}</p>
-              <p className="mt-1 font-sinhala text-xs text-primary/80 sm:text-sm">{WELCOME.sinhala}</p>
-              <div className="mt-5 sm:mt-6">
-                <OccasionChips onSelect={handleSubmit} />
-              </div>
-            </motion.div>
-          )}
+        {messages.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 text-center sm:mb-8"
+          >
+            <h2 className="font-display text-[1.625rem] font-bold leading-tight tracking-tight sm:text-4xl">
+              {WELCOME.title}
+            </h2>
+            <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground sm:max-w-md sm:text-base">
+              {WELCOME.subtitle}
+            </p>
+            <p className="mx-auto mt-2 max-w-sm font-sinhala text-sm leading-relaxed text-primary/80 sm:text-base">
+              {WELCOME.sinhala}
+            </p>
+            <div className="mt-6 sm:mt-8">
+              <OccasionChips onSelect={handleSubmit} />
+            </div>
+          </motion.div>
+        )}
 
-          <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
             {messages.map((msg, index) => {
               const isLastMessage = index === messages.length - 1;
               const displayText =
@@ -170,10 +174,10 @@ export function ChatInterface() {
                 >
                   <div
                     className={cn(
-                      "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed sm:px-4 sm:py-3",
+                      "rounded-2xl px-4 py-3 text-sm leading-relaxed sm:px-4 sm:py-3",
                       msg.role === "user"
-                        ? "max-w-[min(88%,20rem)] bg-primary text-primary-foreground rounded-br-md sm:max-w-[85%]"
-                        : "w-full max-w-full bg-card border border-border/50 rounded-bl-md shadow-sm sm:max-w-[min(100%,42rem)]"
+                        ? "max-w-[min(90%,20rem)] break-words text-left bg-primary text-primary-foreground rounded-br-md sm:max-w-[85%]"
+                        : "w-full min-w-0 max-w-full bg-card border border-border/50 rounded-bl-md shadow-sm sm:max-w-[min(100%,42rem)]"
                     )}
                   >
                     {msg.role === "assistant" && (
@@ -184,7 +188,7 @@ export function ChatInterface() {
                     {msg.role === "assistant" ? (
                       <MarkdownMessage content={displayText} />
                     ) : (
-                      <div className="whitespace-pre-wrap">{displayText}</div>
+                      <div className="break-words whitespace-pre-wrap">{displayText}</div>
                     )}
 
                     {activeTools.map((inv) => (
@@ -228,7 +232,7 @@ export function ChatInterface() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex justify-start"
               >
-                <div className="w-full max-w-full rounded-2xl border border-border/50 bg-card px-3.5 py-2.5 shadow-sm rounded-bl-md sm:max-w-[min(100%,42rem)] sm:px-4 sm:py-3">
+                <div className="w-full min-w-0 max-w-full rounded-2xl border border-border/50 bg-card px-4 py-3 shadow-sm rounded-bl-md sm:max-w-[min(100%,42rem)]">
                   <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-primary">
                     Saama
                   </p>
@@ -250,15 +254,15 @@ export function ChatInterface() {
             )}
           </AnimatePresence>
 
-          {error && (
-            <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-              {error.message || "Something went wrong. Please try again."}
-            </div>
-          )}
+        {error && (
+          <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">
+            {error.message || "Something went wrong. Please try again."}
+          </div>
+        )}
       </div>
 
       <div
-        className="safe-bottom shrink-0 border-t border-border/50 bg-card/70 px-3 py-2.5 backdrop-blur-xl sm:px-6 sm:py-3"
+        className="safe-bottom content-padding shrink-0 border-t border-border/50 bg-card/70 py-3 backdrop-blur-xl sm:py-3.5"
         style={keyboardOffset > 0 ? { paddingBottom: keyboardOffset } : undefined}
       >
         <form
@@ -286,7 +290,7 @@ export function ChatInterface() {
             placeholder="Type in Sinhala, English, or Tanglish..."
             rows={1}
             enterKeyHint="send"
-            className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-border/60 bg-background px-3.5 py-2.5 text-base outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3 sm:text-sm"
+            className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-border/60 bg-background px-4 py-3 text-base leading-normal outline-none transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/20 sm:text-sm"
           />
           <Button
             type="submit"
@@ -338,7 +342,7 @@ function toolHint(name: string): string {
 function ThinkingLoader() {
   return (
     <div
-      className="mt-1 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3"
+      className="mt-2 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3"
       role="status"
       aria-live="polite"
       aria-label="Saama is thinking"
@@ -349,7 +353,7 @@ function ThinkingLoader() {
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-foreground">Saama is thinking</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
           Checking Kapruka for you — this may take a few seconds
         </p>
         <div className="mt-2 flex items-center gap-1">
@@ -383,7 +387,7 @@ function ToolStatusCard({
 }) {
   if (variant === "error") {
     return (
-      <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-xs text-destructive">
+      <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-xs leading-relaxed text-destructive">
         {toolLabel(toolName)} failed
         {detail ? ` — ${detail}` : ""}. Please try again.
       </div>
@@ -394,7 +398,7 @@ function ToolStatusCard({
     <motion.div
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mt-3 flex items-start gap-3 rounded-xl border border-primary/25 bg-primary/5 px-3 py-3 shadow-sm"
+      className="mt-3 flex items-start gap-3 rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 shadow-sm"
       role="status"
       aria-live="polite"
       aria-label={`${toolLabel(toolName)} in progress`}
@@ -406,7 +410,7 @@ function ToolStatusCard({
         <p className="text-sm font-medium text-foreground">
           {toolLabel(toolName)}…
         </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{toolHint(toolName)}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{toolHint(toolName)}</p>
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-primary/10">
           <motion.div
             className="h-full rounded-full bg-primary/60"
