@@ -1,30 +1,82 @@
 import { isToolUIPart, getToolName, type UIMessage } from "ai";
 
-const CATALOG_TOOLS = new Set(["search_products", "get_product"]);
+function getAllTextParts(message: UIMessage): string[] {
+  return message.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text.trim())
+    .filter(Boolean);
+}
 
-export function getMessageText(message: UIMessage): string {
+function getTextAfterLastTool(message: UIMessage): string {
+  let lastToolIdx = -1;
+  for (let i = 0; i < message.parts.length; i++) {
+    if (isToolUIPart(message.parts[i])) lastToolIdx = i;
+  }
+
   const textParts = message.parts
+    .slice(lastToolIdx + 1)
     .filter((part) => part.type === "text")
     .map((part) => part.text.trim())
     .filter(Boolean);
 
   if (textParts.length === 0) return "";
   if (textParts.length === 1) return textParts[0];
+  return textParts[textParts.length - 1];
+}
 
-  const catalogTools = getToolParts(message).filter((t) =>
-    CATALOG_TOOLS.has(t.toolName)
-  );
-  const hasCatalogResults = catalogTools.some(
-    (t) => t.state === "output-available"
-  );
+function looksLikeInterimNarration(text: string): boolean {
+  if (!text) return true;
+  if (text.length >= 320) return false;
+  if (text.includes("|") || text.includes("###") || text.includes("\n- ")) {
+    return false;
+  }
+  return true;
+}
 
-  // After search/product tools, show only the final formatted response
-  // (skip "let me search..." filler that gets glued to results).
-  if (hasCatalogResults) {
-    return textParts[textParts.length - 1];
+export function getMessageText(message: UIMessage): string {
+  const textParts = getAllTextParts(message);
+  if (textParts.length === 0) return "";
+  if (textParts.length === 1) return textParts[0];
+  return textParts[textParts.length - 1];
+}
+
+export function getDisplayMessageText(
+  message: UIMessage,
+  opts?: { isLastMessage?: boolean; isStreaming?: boolean }
+): string {
+  const toolParts = getToolParts(message);
+  const activeLoads = getActiveToolLoads(message);
+  const isLastStreaming = Boolean(opts?.isLastMessage && opts?.isStreaming);
+
+  if (activeLoads.length > 0) return "";
+
+  if (isLastStreaming) {
+    if (toolParts.length > 0) return "";
+    const interim = getAllTextParts(message).join("\n\n");
+    return looksLikeInterimNarration(interim) ? "" : interim;
   }
 
-  return textParts.join("\n\n");
+  const hasCompletedTools = toolParts.some(
+    (t) => t.state === "output-available" || t.state === "output-error"
+  );
+  if (hasCompletedTools) {
+    return getTextAfterLastTool(message);
+  }
+
+  const textParts = getAllTextParts(message);
+  if (textParts.length <= 1) return textParts[0] ?? "";
+  return textParts[textParts.length - 1];
+}
+
+export function isAssistantTurnInProgress(
+  message: UIMessage,
+  opts?: { isLastMessage?: boolean; isStreaming?: boolean }
+): boolean {
+  if (message.role !== "assistant") return false;
+  if (!opts?.isLastMessage || !opts?.isStreaming) return false;
+  if (getActiveToolLoads(message).length > 0) return true;
+  if (getToolParts(message).length > 0) return true;
+  return looksLikeInterimNarration(getAllTextParts(message).join("\n\n"));
 }
 
 export interface ToolPartInfo {

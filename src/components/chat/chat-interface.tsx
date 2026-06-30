@@ -14,8 +14,10 @@ import { PayLinkCard } from "@/components/commerce/pay-link-card";
 import { parseProductsFromToolResult } from "@/lib/parse-products";
 import {
   getMessageText,
+  getDisplayMessageText,
   getToolParts,
   getActiveToolLoads,
+  isAssistantTurnInProgress,
 } from "@/lib/chat-utils";
 import { MarkdownMessage } from "./markdown-message";
 import { useCartStore } from "@/lib/store/cart-store";
@@ -127,79 +129,102 @@ export function ChatInterface() {
           )}
 
           <div className="flex flex-col gap-4">
-            {messages.map((msg) => (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={cn(
-                  "flex",
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
-                <div
+            {messages.map((msg, index) => {
+              const isLastMessage = index === messages.length - 1;
+              const displayText =
+                msg.role === "assistant"
+                  ? getDisplayMessageText(msg, {
+                      isLastMessage,
+                      isStreaming: isLoading,
+                    })
+                  : getMessageText(msg);
+              const activeTools = getActiveToolLoads(msg);
+              const showThinking =
+                msg.role === "assistant" &&
+                isAssistantTurnInProgress(msg, {
+                  isLastMessage,
+                  isStreaming: isLoading,
+                }) &&
+                activeTools.length === 0;
+
+              return (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
                   className={cn(
-                    "rounded-2xl px-4 py-3 text-sm leading-relaxed",
-                    msg.role === "user"
-                      ? "max-w-[85%] bg-primary text-primary-foreground rounded-br-md"
-                      : "max-w-[min(100%,42rem)] bg-card border border-border/50 rounded-bl-md shadow-sm"
+                    "flex",
+                    msg.role === "user" ? "justify-end" : "justify-start"
                   )}
                 >
-                  {msg.role === "assistant" && (
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                      Saama
-                    </p>
-                  )}
-                  {msg.role === "assistant" ? (
-                    <MarkdownMessage content={getMessageText(msg)} />
-                  ) : (
-                    <div className="whitespace-pre-wrap">{getMessageText(msg)}</div>
-                  )}
+                  <div
+                    className={cn(
+                      "rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                      msg.role === "user"
+                        ? "max-w-[85%] bg-primary text-primary-foreground rounded-br-md"
+                        : "max-w-[min(100%,42rem)] bg-card border border-border/50 rounded-bl-md shadow-sm"
+                    )}
+                  >
+                    {msg.role === "assistant" && (
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                        Saama
+                      </p>
+                    )}
+                    {msg.role === "assistant" ? (
+                      <MarkdownMessage content={displayText} />
+                    ) : (
+                      <div className="whitespace-pre-wrap">{displayText}</div>
+                    )}
 
-                  {getActiveToolLoads(msg).map((inv) => (
-                    <ToolStatusCard
-                      key={inv.toolCallId}
-                      toolName={inv.toolName}
-                      variant="loading"
-                    />
-                  ))}
+                    {activeTools.map((inv) => (
+                      <ToolStatusCard
+                        key={inv.toolCallId}
+                        toolName={inv.toolName}
+                        variant="loading"
+                      />
+                    ))}
 
-                  {getToolParts(msg).map((inv) => {
-                    if (inv.state === "output-error") {
-                      return (
-                        <ToolStatusCard
-                          key={inv.toolCallId}
-                          toolName={inv.toolName}
-                          variant="error"
-                          detail={inv.errorText}
-                        />
-                      );
-                    }
-                    if (
-                      inv.state === "output-available" &&
-                      inv.toolName === "create_order" &&
-                      typeof inv.output === "string"
-                    ) {
-                      return <PayLinkCard key={inv.toolCallId} text={inv.output} />;
-                    }
-                    return null;
-                  })}
+                    {showThinking && <ThinkingLoader />}
+
+                    {getToolParts(msg).map((inv) => {
+                      if (inv.state === "output-error") {
+                        return (
+                          <ToolStatusCard
+                            key={inv.toolCallId}
+                            toolName={inv.toolName}
+                            variant="error"
+                            detail={inv.errorText}
+                          />
+                        );
+                      }
+                      if (
+                        inv.state === "output-available" &&
+                        inv.toolName === "create_order" &&
+                        typeof inv.output === "string"
+                      ) {
+                        return <PayLinkCard key={inv.toolCallId} text={inv.output} />;
+                      }
+                      return null;
+                    })}
+                  </div>
+                </motion.div>
+              );
+            })}
+
+            {isLoading && messages[messages.length - 1]?.role === "user" && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-start"
+              >
+                <div className="max-w-[min(100%,42rem)] rounded-2xl border border-border/50 bg-card px-4 py-3 shadow-sm rounded-bl-md">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    Saama
+                  </p>
+                  <ThinkingLoader />
                 </div>
               </motion.div>
-            ))}
-
-            {isLoading &&
-              messages[messages.length - 1]?.role === "user" &&
-              !messages.some(
-                (m) => m.role === "assistant" && getActiveToolLoads(m).length > 0
-              ) && (
-                <div className="flex justify-start">
-                  <div className="flex items-center gap-2 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm text-muted-foreground">
-                    <Loader2 className="size-4 animate-spin text-primary" />
-                    Saama is thinking...
-                  </div>
-                </div>
-              )}
+            )}
           </div>
 
           <AnimatePresence>
@@ -290,6 +315,43 @@ function toolHint(name: string): string {
   return hints[name] ?? "Please wait a moment";
 }
 
+function ThinkingLoader() {
+  return (
+    <div
+      className="mt-1 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3"
+      role="status"
+      aria-live="polite"
+      aria-label="Saama is thinking"
+    >
+      <div className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+        <Loader2 className="size-4 animate-spin text-primary" />
+        <span className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-foreground">Saama is thinking</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Checking Kapruka for you — this may take a few seconds
+        </p>
+        <div className="mt-2 flex items-center gap-1">
+          {[0, 1, 2].map((i) => (
+            <motion.span
+              key={i}
+              className="size-1.5 rounded-full bg-primary"
+              animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
+              transition={{
+                duration: 1,
+                repeat: Infinity,
+                delay: i * 0.2,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ToolStatusCard({
   toolName,
   variant,
@@ -309,16 +371,32 @@ function ToolStatusCard({
   }
 
   return (
-    <div className="mt-3 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
-      <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
-      <div>
-        <p className="text-sm font-medium text-foreground">
-          {toolLabel(toolName)}...
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {toolHint(toolName)}
-        </p>
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mt-3 flex items-start gap-3 rounded-xl border border-primary/25 bg-primary/5 px-3 py-3 shadow-sm"
+      role="status"
+      aria-live="polite"
+      aria-label={`${toolLabel(toolName)} in progress`}
+    >
+      <div className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+        <Loader2 className="size-4 animate-spin text-primary" />
       </div>
-    </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-foreground">
+          {toolLabel(toolName)}…
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{toolHint(toolName)}</p>
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-primary/10">
+          <motion.div
+            className="h-full rounded-full bg-primary/60"
+            initial={{ x: "-100%" }}
+            animate={{ x: "200%" }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+            style={{ width: "40%" }}
+          />
+        </div>
+      </div>
+    </motion.div>
   );
 }
