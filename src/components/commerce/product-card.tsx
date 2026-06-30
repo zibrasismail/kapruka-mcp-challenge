@@ -1,0 +1,75 @@
+"use client";
+
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { Plus, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { formatLKR } from "@/lib/utils";
+import { useCartStore } from "@/lib/store/cart-store";
+import { toast } from "sonner";
+
+export interface ProductData {
+  id: string;
+  name: string;
+  price: number;
+  image?: string;
+  url?: string;
+  inStock?: boolean;
+}
+
+export function ProductCard({ product, index = 0 }: { product: ProductData; index?: number }) {
+  const addItem = useCartStore((s) => s.addItem);
+
+  const handleAdd = () => {
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+    });
+    toast.success(`Added ${product.name} to cart`);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.08 }}
+      className="flex w-56 shrink-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm"
+    >
+      <div className="relative aspect-square bg-muted">
+        {product.image ? (
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover"
+            sizes="224px"
+            unoptimized
+          />
+        ) : (
+          <div className="flex size-full items-center justify-center text-muted-foreground text-xs">
+            No image
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-2 p-3">
+        <h3 className="line-clamp-2 text-sm font-medium leading-snug">{product.name}</h3>
+        <p className="text-base font-semibold text-primary">{formatLKR(product.price)}</p>
+        <div className="mt-auto flex gap-2">
+          <Button size="sm" className="flex-1" onClick={handleAdd}>
+            <Plus className="size-3.5" />
+            Add
+          </Button>
+          {product.url && (
+            <Button size="sm" variant="outline" asChild>
+              <a href={product.url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="size-3.5" />
+              </a>
+            </Button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
