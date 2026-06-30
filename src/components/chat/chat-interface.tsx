@@ -87,20 +87,20 @@ export function ChatInterface() {
   }, [messages]);
 
   return (
-    <div className="flex h-dvh flex-col bg-background">
-      <header className="z-10 flex shrink-0 items-center justify-between border-b border-border/50 bg-card/70 px-4 py-3 backdrop-blur-xl sm:px-6">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
-            <Sparkles className="size-5" />
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background">
+      <header className="safe-top z-10 flex shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-card/70 px-3 py-2.5 backdrop-blur-xl sm:px-6 sm:py-3">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md sm:size-10 sm:rounded-2xl">
+            <Sparkles className="size-4 sm:size-5" />
           </div>
-          <div>
-            <h1 className="font-display text-lg font-semibold leading-tight">
+          <div className="min-w-0">
+            <h1 className="truncate font-display text-base font-semibold leading-tight sm:text-lg">
               Kapruka <span className="text-primary">Saama</span>
             </h1>
-            <p className="text-[11px] text-muted-foreground">සමා · Gift Concierge</p>
+            <p className="truncate text-[10px] text-muted-foreground sm:text-[11px]">සමා · Gift Concierge</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <span className="hidden rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-medium text-emerald-700 sm:inline dark:text-emerald-400">
             Live Kapruka
           </span>
@@ -109,26 +109,26 @@ export function ChatInterface() {
         </div>
       </header>
 
-      <ScrollArea className="flex-1">
-        <div ref={scrollRef} className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+      <ScrollArea className="chat-scroll min-h-0 flex-1">
+        <div ref={scrollRef} className="mx-auto max-w-3xl px-3 py-4 sm:px-6 sm:py-6">
           {messages.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8 text-center"
+              className="mb-6 px-1 text-center sm:mb-8"
             >
-              <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+              <h2 className="font-display text-2xl font-bold tracking-tight sm:text-4xl">
                 {WELCOME.title}
               </h2>
-              <p className="mt-2 text-muted-foreground">{WELCOME.subtitle}</p>
-              <p className="mt-1 font-sinhala text-sm text-primary/80">{WELCOME.sinhala}</p>
-              <div className="mt-6 flex justify-center">
+              <p className="mt-2 text-sm text-muted-foreground sm:text-base">{WELCOME.subtitle}</p>
+              <p className="mt-1 font-sinhala text-xs text-primary/80 sm:text-sm">{WELCOME.sinhala}</p>
+              <div className="mt-5 sm:mt-6">
                 <OccasionChips onSelect={handleSubmit} />
               </div>
             </motion.div>
           )}
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
             {messages.map((msg, index) => {
               const isLastMessage = index === messages.length - 1;
               const displayText =
@@ -159,10 +159,10 @@ export function ChatInterface() {
                 >
                   <div
                     className={cn(
-                      "rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                      "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed sm:px-4 sm:py-3",
                       msg.role === "user"
-                        ? "max-w-[85%] bg-primary text-primary-foreground rounded-br-md"
-                        : "max-w-[min(100%,42rem)] bg-card border border-border/50 rounded-bl-md shadow-sm"
+                        ? "max-w-[min(88%,20rem)] bg-primary text-primary-foreground rounded-br-md sm:max-w-[85%]"
+                        : "w-full max-w-full bg-card border border-border/50 rounded-bl-md shadow-sm sm:max-w-[min(100%,42rem)]"
                     )}
                   >
                     {msg.role === "assistant" && (
@@ -217,7 +217,7 @@ export function ChatInterface() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex justify-start"
               >
-                <div className="max-w-[min(100%,42rem)] rounded-2xl border border-border/50 bg-card px-4 py-3 shadow-sm rounded-bl-md">
+                <div className="w-full max-w-full rounded-2xl border border-border/50 bg-card px-3.5 py-2.5 shadow-sm rounded-bl-md sm:max-w-[min(100%,42rem)] sm:px-4 sm:py-3">
                   <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-primary">
                     Saama
                   </p>
@@ -247,7 +247,7 @@ export function ChatInterface() {
         </div>
       </ScrollArea>
 
-      <div className="shrink-0 border-t border-border/50 bg-card/70 px-4 py-3 backdrop-blur-xl sm:px-6">
+      <div className="safe-bottom shrink-0 border-t border-border/50 bg-card/70 px-3 py-2.5 backdrop-blur-xl sm:px-6 sm:py-3">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -266,7 +266,8 @@ export function ChatInterface() {
             }}
             placeholder="Type in Sinhala, English, or Tanglish..."
             rows={1}
-            className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+            enterKeyHint="send"
+            className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-border/60 bg-background px-3.5 py-2.5 text-base outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3 sm:text-sm"
           />
           <Button
             type="submit"
@@ -281,7 +282,7 @@ export function ChatInterface() {
             )}
           </Button>
         </form>
-        <p className="mx-auto mt-2 max-w-3xl text-center text-[10px] text-muted-foreground">
+        <p className="mx-auto mt-1.5 max-w-3xl text-center text-[10px] text-muted-foreground sm:mt-2">
           Powered by Kapruka MCP · Real products · Real checkout
         </p>
       </div>

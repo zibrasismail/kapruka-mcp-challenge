@@ -28,9 +28,25 @@ export function MarkdownMessage({
               {children}
             </a>
           ),
+          pre: ({ children }) => (
+            <pre className="my-3 max-w-full overflow-x-auto rounded-xl border border-border/60 bg-muted/40 p-3 text-xs">
+              {children}
+            </pre>
+          ),
+          code: ({ children, className: codeClassName }) => {
+            const isBlock = codeClassName?.includes("language-");
+            if (isBlock) {
+              return <code className={codeClassName}>{children}</code>;
+            }
+            return (
+              <code className="rounded-md bg-muted/60 px-1.5 py-0.5 text-[0.85em]">
+                {children}
+              </code>
+            );
+          },
           table: ({ children }) => (
-            <div className="my-3 -mx-1 overflow-x-auto rounded-xl border border-border/60">
-              <table className="w-full min-w-[280px] border-collapse text-left text-xs sm:text-sm">
+            <div className="my-3 -mx-1 max-w-[calc(100%+0.5rem)] overflow-x-auto rounded-xl border border-border/60">
+              <table className="w-full min-w-[260px] border-collapse text-left text-xs sm:min-w-[280px] sm:text-sm">
                 {children}
               </table>
             </div>

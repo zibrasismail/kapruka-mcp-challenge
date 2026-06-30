@@ -1,4 +1,5 @@
 import { isToolUIPart, getToolName, type UIMessage } from "ai";
+import { parseProductsFromToolResult } from "@/lib/parse-products";
 
 function getAllTextParts(message: UIMessage): string[] {
   return message.parts
@@ -66,6 +67,29 @@ export function getDisplayMessageText(
   const textParts = getAllTextParts(message);
   if (textParts.length <= 1) return textParts[0] ?? "";
   return textParts[textParts.length - 1];
+}
+
+export function getMessageProducts(message: UIMessage) {
+  if (message.role !== "assistant") return [];
+
+  const products: ReturnType<typeof parseProductsFromToolResult> = [];
+
+  for (const inv of getToolParts(message)) {
+    if (
+      inv.state === "output-available" &&
+      (inv.toolName === "search_products" || inv.toolName === "get_product") &&
+      typeof inv.output === "string"
+    ) {
+      products.push(...parseProductsFromToolResult(inv.output));
+    }
+  }
+
+  const seen = new Set<string>();
+  return products.filter((p) => {
+    if (seen.has(p.id)) return false;
+    seen.add(p.id);
+    return true;
+  });
 }
 
 export function isAssistantTurnInProgress(

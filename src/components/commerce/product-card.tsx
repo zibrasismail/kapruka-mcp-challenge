@@ -35,20 +35,20 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08 }}
-      className="flex w-56 shrink-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm"
+      className="flex w-[min(82vw,15.5rem)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:w-56"
     >
-      <div className="relative aspect-square bg-muted">
+      <div className="relative aspect-[4/5] bg-muted sm:aspect-square">
         {product.image ? (
           <Image
             src={product.image}
             alt={product.name}
             fill
             className="object-cover"
-            sizes="224px"
+            sizes="(max-width: 640px) 82vw, 224px"
             unoptimized
           />
         ) : (
-          <div className="flex size-full items-center justify-center text-muted-foreground text-xs">
+          <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
             No image
           </div>
         )}
@@ -57,12 +57,12 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
         <h3 className="line-clamp-2 text-sm font-medium leading-snug">{product.name}</h3>
         <p className="text-base font-semibold text-primary">{formatLKR(product.price)}</p>
         <div className="mt-auto flex gap-2">
-          <Button size="sm" className="flex-1" onClick={handleAdd}>
+          <Button size="sm" className="h-9 flex-1" onClick={handleAdd}>
             <Plus className="size-3.5" />
             Add
           </Button>
           {product.url && (
-            <Button size="sm" variant="outline" asChild>
+            <Button size="sm" variant="outline" className="h-9 shrink-0 px-3" asChild>
               <a href={product.url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-3.5" />
               </a>

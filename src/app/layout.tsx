@@ -20,6 +20,12 @@ const notoSinhala = Noto_Sans_Sinhala({
   weight: ["400", "500", "600"],
 });
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export const metadata: Metadata = {
   title: "Kapruka Saama — AI Gift Concierge",
   description:
@@ -42,7 +48,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${dmSans.variable} ${playfair.variable} ${notoSinhala.variable} antialiased`}>
         <ThemeProvider>
           {children}
-          <Toaster position="top-center" richColors />
+          <Toaster
+            position="top-center"
+            richColors
+            toastOptions={{ className: "safe-top" }}
+            offset={{ top: "max(1rem, env(safe-area-inset-top))" }}
+          />
         </ThemeProvider>
       </body>
     </html>

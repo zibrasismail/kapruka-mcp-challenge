@@ -5,6 +5,7 @@ import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCartStore } from "@/lib/store/cart-store";
+import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { formatLKR, cn } from "@/lib/utils";
 
 interface CartPanelProps {
@@ -13,6 +14,7 @@ interface CartPanelProps {
 }
 
 export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
+  const isMobile = useIsMobile();
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
@@ -25,20 +27,21 @@ export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
       <SheetTrigger asChild>
         <button
           className={cn(
-            "relative flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-4 py-2 text-sm font-medium backdrop-blur-sm transition hover:bg-card",
+            "touch-target relative flex items-center justify-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-2 text-sm font-medium backdrop-blur-sm transition hover:bg-card sm:px-4",
             triggerClassName
           )}
+          aria-label={`Cart${itemCount() > 0 ? `, ${itemCount()} items` : ""}`}
         >
           <ShoppingBag className="size-4" />
           <span className="hidden sm:inline">Cart</span>
           {itemCount() > 0 && (
-            <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+            <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground sm:static sm:size-5">
               {itemCount()}
             </span>
           )}
         </button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent side={isMobile ? "bottom" : "right"}>
         <div className="flex h-full flex-col">
           <h2 className="font-display text-xl font-semibold">Your Cart</h2>
           <p className="text-sm text-muted-foreground">
@@ -70,22 +73,25 @@ export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
                       <div className="mt-auto flex items-center gap-2">
                         <button
                           onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                          className="rounded-full border p-1 hover:bg-muted"
+                          className="touch-target flex items-center justify-center rounded-full border p-1 hover:bg-muted"
+                          aria-label="Decrease quantity"
                         >
-                          <Minus className="size-3" />
+                          <Minus className="size-3.5" />
                         </button>
-                        <span className="w-6 text-center text-sm">{item.quantity}</span>
+                        <span className="w-8 text-center text-sm tabular-nums">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                          className="rounded-full border p-1 hover:bg-muted"
+                          className="touch-target flex items-center justify-center rounded-full border p-1 hover:bg-muted"
+                          aria-label="Increase quantity"
                         >
-                          <Plus className="size-3" />
+                          <Plus className="size-3.5" />
                         </button>
                         <button
                           onClick={() => removeItem(item.productId)}
-                          className="ml-auto rounded-full p-1 text-destructive hover:bg-destructive/10"
+                          className="touch-target ml-auto flex items-center justify-center rounded-full p-1.5 text-destructive hover:bg-destructive/10"
+                          aria-label="Remove item"
                         >
-                          <Trash2 className="size-3.5" />
+                          <Trash2 className="size-4" />
                         </button>
                       </div>
                     </div>
