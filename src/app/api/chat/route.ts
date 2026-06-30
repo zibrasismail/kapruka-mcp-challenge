@@ -49,7 +49,7 @@ export async function POST(req: Request) {
           instructions: SAAMA_SYSTEM_PROMPT,
           messages: modelMessages,
           tools: kaprukaTools,
-          stopWhen: isStepCount(8),
+          stopWhen: isStepCount(5),
           temperature: 0.7,
         });
 

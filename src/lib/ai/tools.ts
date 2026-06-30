@@ -18,7 +18,7 @@ export const kaprukaTools = {
         .enum(["relevance", "price_asc", "price_desc", "name"])
         .optional()
         .default("relevance"),
-      limit: z.number().optional().default(8),
+      limit: z.number().optional().default(5),
       currency: z.string().optional().default("LKR"),
       response_format: z.enum(["markdown", "json"]).optional().default("json"),
     }),

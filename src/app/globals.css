@@ -91,3 +91,54 @@ body::before {
   background: var(--border);
   border-radius: 4px;
 }
+
+/* Saama assistant markdown */
+.saama-markdown {
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.saama-markdown > *:first-child {
+  margin-top: 0;
+}
+
+.saama-markdown > *:last-child {
+  margin-bottom: 0;
+}
+
+.saama-markdown h3 {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+  color: var(--foreground);
+}
+
+.saama-markdown p {
+  margin: 0.5rem 0;
+}
+
+.saama-markdown strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.saama-markdown hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.75rem 0;
+}
+
+.saama-markdown ul,
+.saama-markdown ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.saama-markdown li {
+  margin: 0.25rem 0;
+}
+
+.saama-markdown li::marker {
+  color: var(--primary);
+}

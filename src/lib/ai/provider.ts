@@ -54,7 +54,8 @@ export function getModelChain(): string[] {
 
 export function getModel(modelId?: string): LanguageModel {
   const openai = createNineRouter();
-  return openai(modelId ?? getModelChain()[0]);
+  // 9Router exposes an OpenAI Chat Completions endpoint, not Responses API.
+  return openai.chat(modelId ?? getModelChain()[0]);
 }
 
 export function getProviderInfo() {

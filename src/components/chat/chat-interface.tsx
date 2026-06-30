@@ -12,7 +12,12 @@ import { ProductCarousel } from "@/components/commerce/product-carousel";
 import { CartPanel } from "@/components/commerce/cart-panel";
 import { PayLinkCard } from "@/components/commerce/pay-link-card";
 import { parseProductsFromToolResult } from "@/lib/parse-products";
-import { getMessageText, getToolParts } from "@/lib/chat-utils";
+import {
+  getMessageText,
+  getToolParts,
+  getActiveToolLoads,
+} from "@/lib/chat-utils";
+import { MarkdownMessage } from "./markdown-message";
 import { useCartStore } from "@/lib/store/cart-store";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -134,10 +139,10 @@ export function ChatInterface() {
               >
                 <div
                   className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                    "rounded-2xl px-4 py-3 text-sm leading-relaxed",
                     msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-card border border-border/50 rounded-bl-md shadow-sm"
+                      ? "max-w-[85%] bg-primary text-primary-foreground rounded-br-md"
+                      : "max-w-[min(100%,42rem)] bg-card border border-border/50 rounded-bl-md shadow-sm"
                   )}
                 >
                   {msg.role === "assistant" && (
@@ -145,21 +150,29 @@ export function ChatInterface() {
                       Saama
                     </p>
                   )}
-                  <div className="whitespace-pre-wrap">{getMessageText(msg)}</div>
+                  {msg.role === "assistant" ? (
+                    <MarkdownMessage content={getMessageText(msg)} />
+                  ) : (
+                    <div className="whitespace-pre-wrap">{getMessageText(msg)}</div>
+                  )}
+
+                  {getActiveToolLoads(msg).map((inv) => (
+                    <ToolStatusCard
+                      key={inv.toolCallId}
+                      toolName={inv.toolName}
+                      variant="loading"
+                    />
+                  ))}
 
                   {getToolParts(msg).map((inv) => {
-                    if (
-                      inv.state === "input-streaming" ||
-                      inv.state === "input-available"
-                    ) {
+                    if (inv.state === "output-error") {
                       return (
-                        <div
+                        <ToolStatusCard
                           key={inv.toolCallId}
-                          className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"
-                        >
-                          <Loader2 className="size-3 animate-spin" />
-                          {toolLabel(inv.toolName)}...
-                        </div>
+                          toolName={inv.toolName}
+                          variant="error"
+                          detail={inv.errorText}
+                        />
                       );
                     }
                     if (
@@ -175,14 +188,18 @@ export function ChatInterface() {
               </motion.div>
             ))}
 
-            {isLoading && messages[messages.length - 1]?.role === "user" && (
-              <div className="flex justify-start">
-                <div className="flex items-center gap-2 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm text-muted-foreground">
-                  <Loader2 className="size-4 animate-spin text-primary" />
-                  Saama is thinking...
+            {isLoading &&
+              messages[messages.length - 1]?.role === "user" &&
+              !messages.some(
+                (m) => m.role === "assistant" && getActiveToolLoads(m).length > 0
+              ) && (
+                <div className="flex justify-start">
+                  <div className="flex items-center gap-2 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin text-primary" />
+                    Saama is thinking...
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
 
           <AnimatePresence>
@@ -258,4 +275,50 @@ function toolLabel(name: string): string {
     track_order: "Tracking order",
   };
   return labels[name] ?? "Working";
+}
+
+function toolHint(name: string): string {
+  const hints: Record<string, string> = {
+    search_products: "Browsing the live catalog — usually takes 10–20 seconds",
+    get_product: "Fetching product details from Kapruka",
+    list_categories: "Loading gift categories",
+    list_delivery_cities: "Looking up delivery cities",
+    check_delivery: "Checking delivery availability",
+    create_order: "Preparing your checkout link",
+    track_order: "Fetching order status",
+  };
+  return hints[name] ?? "Please wait a moment";
+}
+
+function ToolStatusCard({
+  toolName,
+  variant,
+  detail,
+}: {
+  toolName: string;
+  variant: "loading" | "error";
+  detail?: string;
+}) {
+  if (variant === "error") {
+    return (
+      <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-xs text-destructive">
+        {toolLabel(toolName)} failed
+        {detail ? ` — ${detail}` : ""}. Please try again.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+      <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
+      <div>
+        <p className="text-sm font-medium text-foreground">
+          {toolLabel(toolName)}...
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {toolHint(toolName)}
+        </p>
+      </div>
+    </div>
+  );
 }
