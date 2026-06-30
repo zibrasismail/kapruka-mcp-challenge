@@ -38,7 +38,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
       data-product-card
       className="flex w-[min(68vw,13.5rem)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:w-56"
     >
-      <div className="relative aspect-[4/5] bg-muted sm:aspect-square">
+      <div className="relative aspect-4/5 bg-muted sm:aspect-square">
         {product.image ? (
           <Image
             src={product.image}

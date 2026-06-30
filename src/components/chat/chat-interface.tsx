@@ -176,7 +176,7 @@ export function ChatInterface() {
                     className={cn(
                       "rounded-2xl px-4 py-3 text-sm leading-relaxed sm:px-4 sm:py-3",
                       msg.role === "user"
-                        ? "max-w-[min(90%,20rem)] break-words text-left bg-primary text-primary-foreground rounded-br-md sm:max-w-[85%]"
+                        ? "max-w-[min(90%,20rem)] wrap-break-word text-left bg-primary text-primary-foreground rounded-br-md sm:max-w-[85%]"
                         : "w-full min-w-0 max-w-full bg-card border border-border/50 rounded-bl-md shadow-sm sm:max-w-[min(100%,42rem)]"
                     )}
                   >
@@ -188,7 +188,7 @@ export function ChatInterface() {
                     {msg.role === "assistant" ? (
                       <MarkdownMessage content={displayText} />
                     ) : (
-                      <div className="break-words whitespace-pre-wrap">{displayText}</div>
+                      <div className="wrap-break-word whitespace-pre-wrap">{displayText}</div>
                     )}
 
                     {activeTools.map((inv) => (
