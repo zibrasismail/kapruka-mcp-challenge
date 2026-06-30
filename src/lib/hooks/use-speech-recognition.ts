@@ -64,8 +64,12 @@ export function useSpeechRecognition(options?: {
     options?.autoStopOnSilence,
   ]);
 
-  const [isSupported] = useState(() => !!getSpeechRecognitionCtor());
+  const [isSupported, setIsSupported] = useState(false);
   const [isListening, setIsListening] = useState(false);
+
+  useEffect(() => {
+    setIsSupported(!!getSpeechRecognitionCtor());
+  }, []);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const wantListeningRef = useRef(false);

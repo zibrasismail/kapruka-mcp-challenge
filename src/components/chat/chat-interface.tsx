@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { DefaultChatTransport } from "ai";
-import { Send, Sparkles, Loader2 } from "lucide-react";
+import { Send, Sparkles, Loader2, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { OccasionChips } from "./occasion-chips";
@@ -46,7 +46,6 @@ export function ChatInterface() {
   const speechBaseRef = useRef("");
   const speechFinalRef = useRef("");
   const inputValueRef = useRef("");
-  const holdActiveRef = useRef(false);
   const [input, setInput] = useState("");
   const [speechLang, setSpeechLang] = useState<SpeechLanguageId>("si-LK");
   const [speechAutoSend, setSpeechAutoSend] = useState(false);
@@ -191,23 +190,10 @@ export function ChatInterface() {
     beginSpeechCapture();
     toast.message(
       speechAutoSend
-        ? "Listening… pause to auto-send"
-        : "Listening… tap Stop when done",
+        ? "Listening… tap mic again or pause to auto-send"
+        : "Listening… tap mic when done",
       { duration: 2200 },
     );
-  };
-
-  const handleMicHoldStart = () => {
-    if (isLoading || isListening) return;
-    holdActiveRef.current = true;
-    beginSpeechCapture();
-    navigator.vibrate?.(12);
-  };
-
-  const handleMicHoldEnd = () => {
-    if (!holdActiveRef.current) return;
-    holdActiveRef.current = false;
-    stopSpeech();
   };
 
   const handleSpeechLangChange = (lang: SpeechLanguageId) => {
@@ -435,12 +421,8 @@ export function ChatInterface() {
               speechLang={speechLang}
               speechAutoSend={speechAutoSend}
               isLoading={isLoading}
-              isMobile={isMobile}
               onLangChange={handleSpeechLangChange}
               onAutoSendChange={handleSpeechAutoSendChange}
-              onMicClick={handleMicClick}
-              onMicHoldStart={handleMicHoldStart}
-              onMicHoldEnd={handleMicHoldEnd}
             />
           )}
           <div
@@ -481,6 +463,31 @@ export function ChatInterface() {
               enterKeyHint={isMobile ? "enter" : "send"}
               className="max-h-32 min-h-11 min-w-0 flex-1 resize-none border-0 bg-transparent px-3.5 py-2.5 text-base leading-snug outline-none placeholder:leading-snug placeholder:text-muted-foreground/75 sm:px-4 sm:py-3 sm:text-sm"
             />
+            {isSpeechSupported && (
+              <Button
+                type="button"
+                variant={isListening ? "default" : "ghost"}
+                size="icon"
+                onClick={handleMicClick}
+                disabled={isLoading}
+                aria-label={isListening ? "Stop listening" : "Start voice input"}
+                aria-pressed={isListening}
+                className={cn(
+                  "m-1 size-9 shrink-0 rounded-xl sm:m-1.5 sm:size-10",
+                  isListening &&
+                    "relative bg-destructive text-white hover:bg-destructive/90",
+                )}
+              >
+                {isListening ? (
+                  <>
+                    <span className="absolute inset-0 animate-ping-soft rounded-xl bg-destructive/40" />
+                    <MicOff className="relative size-4" />
+                  </>
+                ) : (
+                  <Mic className="size-4" />
+                )}
+              </Button>
+            )}
             <Button
               type="submit"
               size="icon"
