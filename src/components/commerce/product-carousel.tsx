@@ -38,7 +38,7 @@ function productsEqual(a: ProductData[], b: ProductData[]): boolean {
 export function ProductCarousel({ products }: { products: ProductData[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const measureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const scrollStateRef = useRef({ left: false, right: false });
+  const scrollStateRef = useRef({ left: false, right: false, overflow: false });
 
   const signature = useMemo(() => productsSignature(products), [products]);
   const productsRef = useRef(products);
@@ -50,6 +50,7 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
   const [isEnriching, setIsEnriching] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [hasHorizontalOverflow, setHasHorizontalOverflow] = useState(false);
 
   const applyDisplayProducts = useCallback((next: ProductData[]) => {
     setDisplayProducts((prev) => (productsEqual(prev, next) ? prev : next));
@@ -106,17 +107,20 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
     if (!el) return;
 
     const maxScroll = el.scrollWidth - el.clientWidth;
-    const nextLeft = el.scrollLeft > 4;
-    const nextRight = maxScroll > 4 && el.scrollLeft < maxScroll - 4;
+    const overflows = maxScroll > 2;
+    const nextLeft = overflows && el.scrollLeft > 4;
+    const nextRight = overflows && el.scrollLeft < maxScroll - 4;
 
     if (
       scrollStateRef.current.left === nextLeft &&
-      scrollStateRef.current.right === nextRight
+      scrollStateRef.current.right === nextRight &&
+      scrollStateRef.current.overflow === overflows
     ) {
       return;
     }
 
-    scrollStateRef.current = { left: nextLeft, right: nextRight };
+    scrollStateRef.current = { left: nextLeft, right: nextRight, overflow: overflows };
+    setHasHorizontalOverflow(overflows);
     setCanScrollLeft(nextLeft);
     setCanScrollRight(nextRight);
   }, []);
@@ -132,10 +136,12 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
 
     scheduleMeasure();
     el.addEventListener("scroll", scheduleMeasure, { passive: true });
+    window.addEventListener("resize", scheduleMeasure, { passive: true });
 
     return () => {
       if (measureTimerRef.current) clearTimeout(measureTimerRef.current);
       el.removeEventListener("scroll", scheduleMeasure);
+      window.removeEventListener("resize", scheduleMeasure);
     };
   }, [signature, scheduleMeasure]);
 
@@ -154,7 +160,7 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
 
   if (!displayProducts.length) return null;
 
-  const hasOverflow = canScrollLeft || canScrollRight;
+  const showScrollControls = hasHorizontalOverflow && (canScrollLeft || canScrollRight);
 
   return (
     <div className="full-bleed-mobile mt-4 sm:mt-5">
@@ -162,7 +168,7 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-xs sm:tracking-wider">
           Products found · {displayProducts.length}
         </p>
-        {hasOverflow && (
+        {showScrollControls && (
           <div className="flex shrink-0 items-center gap-1">
             <Button
               type="button"
@@ -191,13 +197,13 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
       </div>
 
       <div className="relative">
-        {hasOverflow && canScrollLeft && (
+        {showScrollControls && canScrollLeft && (
           <div
             className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r from-background to-transparent sm:w-8"
             aria-hidden
           />
         )}
-        {hasOverflow && canScrollRight && (
+        {showScrollControls && canScrollRight && (
           <div
             className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l from-background to-transparent sm:w-8"
             aria-hidden
@@ -207,7 +213,10 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
         <div
           ref={trackRef}
           className={cn(
-            "carousel-track flex gap-3 overflow-x-auto pb-2 pt-0.5 snap-x snap-mandatory",
+            "carousel-track flex gap-3 overflow-y-hidden pb-2 pt-0.5 snap-x snap-mandatory",
+            hasHorizontalOverflow
+              ? "carousel-track--scrollable overflow-x-auto"
+              : "overflow-x-hidden",
             "content-padding scroll-px-[max(1rem,env(safe-area-inset-left))]",
             "sm:scroll-px-6",
           )}

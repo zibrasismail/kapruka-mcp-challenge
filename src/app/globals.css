@@ -109,41 +109,57 @@ body::before {
 .carousel-track {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
+  overscroll-behavior-y: none;
   touch-action: pan-x;
   scroll-behavior: smooth;
+  overflow-y: hidden;
+}
+
+.carousel-track:not(.carousel-track--scrollable) {
+  scrollbar-width: none;
+}
+
+.carousel-track:not(.carousel-track--scrollable)::-webkit-scrollbar {
+  display: none;
 }
 
 @media (max-width: 639px) {
-  .carousel-track {
+  .carousel-track--scrollable {
     scrollbar-width: none;
   }
 
-  .carousel-track::-webkit-scrollbar {
+  .carousel-track--scrollable::-webkit-scrollbar {
     display: none;
   }
 }
 
 @media (min-width: 640px) {
-  .carousel-track {
+  .carousel-track--scrollable {
     scrollbar-width: thin;
     scrollbar-color: var(--muted-foreground) transparent;
   }
 
-  .carousel-track::-webkit-scrollbar {
+  .carousel-track--scrollable::-webkit-scrollbar {
     height: 6px;
+    width: 0;
   }
 
-  .carousel-track::-webkit-scrollbar-track {
+  .carousel-track--scrollable::-webkit-scrollbar:vertical {
+    display: none;
+    width: 0;
+  }
+
+  .carousel-track--scrollable::-webkit-scrollbar-track {
     margin: 0 0.25rem;
     background: transparent;
   }
 
-  .carousel-track::-webkit-scrollbar-thumb {
+  .carousel-track--scrollable::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 999px;
   }
 
-  .carousel-track:hover::-webkit-scrollbar-thumb {
+  .carousel-track--scrollable:hover::-webkit-scrollbar-thumb {
     background: var(--muted-foreground);
   }
 }
