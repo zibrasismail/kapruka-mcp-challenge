@@ -1,9 +1,8 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { DefaultChatTransport } from "ai";
-import { useRef, useEffect, useState, useMemo } from "react";
-import { motion } from "framer-motion";
 import { Send, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OccasionChips } from "./occasion-chips";
@@ -38,9 +37,18 @@ export function ChatInterface() {
   const lastScrollHeightRef = useRef(0);
   const cartItems = useCartStore((s) => s.items);
 
+  const transport = useMemo(
+    () => new DefaultChatTransport({ api: "/api/chat" }),
+    [],
+  );
+
+  const onChatError = useCallback((err: Error) => {
+    console.error("[chat]", err);
+  }, []);
+
   const { messages, sendMessage, status, error } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/chat" }),
-    onError: (err) => console.error("[chat]", err),
+    transport,
+    onError: onChatError,
   });
 
   const isLoading = status === "submitted" || status === "streaming";
@@ -49,14 +57,14 @@ export function ChatInterface() {
     const el = scrollRef.current;
     if (!el) return;
 
-    const nextHeight = el.scrollHeight;
-    if (nextHeight === lastScrollHeightRef.current) return;
-    lastScrollHeightRef.current = nextHeight;
-
-    el.scrollTo({
-      top: nextHeight,
-      behavior: isLoading ? "auto" : "smooth",
+    const frame = requestAnimationFrame(() => {
+      const nextHeight = el.scrollHeight;
+      if (nextHeight === lastScrollHeightRef.current) return;
+      lastScrollHeightRef.current = nextHeight;
+      el.scrollTop = nextHeight;
     });
+
+    return () => cancelAnimationFrame(frame);
   }, [messages, isLoading]);
 
   const adjustTextareaHeight = () => {
@@ -139,11 +147,7 @@ export function ChatInterface() {
         className="chat-scroll content-padding mx-auto min-h-0 w-full max-w-3xl flex-1 overflow-y-auto overscroll-y-contain py-4 sm:py-6"
       >
         {messages.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 text-center sm:mb-8"
-          >
+          <div className="animate-fade-in-up mb-6 text-center sm:mb-8">
             <h2 className="font-display text-[1.625rem] font-bold leading-tight tracking-tight sm:text-4xl">
               {WELCOME.title}
             </h2>
@@ -156,7 +160,7 @@ export function ChatInterface() {
             <div className="mt-6 sm:mt-8">
               <OccasionChips onSelect={handleSubmit} />
             </div>
-          </motion.div>
+          </div>
         )}
 
         <div className="flex flex-col gap-3 sm:gap-4">
@@ -179,10 +183,8 @@ export function ChatInterface() {
               activeTools.length === 0;
 
             return (
-              <motion.div
+              <div
                 key={msg.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
                 className={cn(
                   "flex",
                   msg.role === "user" ? "justify-end" : "justify-start",
@@ -242,34 +244,26 @@ export function ChatInterface() {
                     return null;
                   })}
                 </div>
-              </motion.div>
+              </div>
             );
           })}
 
           {isLoading && messages[messages.length - 1]?.role === "user" && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-start"
-            >
+            <div className="flex justify-start">
               <div className="w-full min-w-0 max-w-full rounded-2xl border border-border/50 bg-card px-4 py-3 shadow-sm rounded-bl-md sm:max-w-[min(100%,42rem)]">
                 <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-primary">
                   Saama
                 </p>
                 <ThinkingLoader />
               </div>
-            </motion.div>
+            </div>
           )}
         </div>
 
         {toolProducts.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
-          >
+          <div className="animate-fade-in">
             <ProductCarousel products={toolProducts} />
-          </motion.div>
+          </div>
         )}
 
         {error && (
@@ -368,7 +362,7 @@ function ThinkingLoader() {
     >
       <div className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
         <Loader2 className="size-4 animate-spin text-primary" />
-        <span className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+        <span className="absolute inset-0 animate-ping-soft rounded-full bg-primary/20" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-foreground">Saama is thinking</p>
@@ -377,16 +371,10 @@ function ThinkingLoader() {
         </p>
         <div className="mt-2 flex items-center gap-1">
           {[0, 1, 2].map((i) => (
-            <motion.span
+            <span
               key={i}
-              className="size-1.5 rounded-full bg-primary"
-              animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
-              transition={{
-                duration: 1,
-                repeat: Infinity,
-                delay: i * 0.2,
-                ease: "easeInOut",
-              }}
+              className="size-1.5 rounded-full bg-primary animate-pulse-dot"
+              style={{ animationDelay: `${i * 0.2}s` }}
             />
           ))}
         </div>
@@ -414,9 +402,7 @@ function ToolStatusCard({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className="mt-3 flex items-start gap-3 rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 shadow-sm"
       role="status"
       aria-live="polite"
@@ -433,15 +419,11 @@ function ToolStatusCard({
           {toolHint(toolName)}
         </p>
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-primary/10">
-          <motion.div
-            className="h-full rounded-full bg-primary/60"
-            initial={{ x: "-100%" }}
-            animate={{ x: "200%" }}
-            transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-            style={{ width: "40%" }}
+          <div
+            className="h-full w-[40%] rounded-full bg-primary/60 animate-progress-slide"
           />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

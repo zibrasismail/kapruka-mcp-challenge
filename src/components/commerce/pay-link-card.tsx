@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ExternalLink, Clock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -12,11 +11,7 @@ export function PayLinkCard({ text }: { text: string }) {
   if (!urlMatch) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="my-3 rounded-2xl border-2 border-primary/30 bg-linear-to-br from-primary/5 to-amber-500/5 p-4 sm:p-5"
-    >
+    <div className="animate-fade-in my-3 rounded-2xl border-2 border-primary/30 bg-linear-to-br from-primary/5 to-amber-500/5 p-4 sm:p-5">
       <div className="flex items-center gap-2.5 text-primary">
         <CreditCard className="size-5 shrink-0" />
         <h3 className="font-display text-base font-semibold leading-tight sm:text-lg">Order Ready!</h3>
@@ -39,6 +34,6 @@ export function PayLinkCard({ text }: { text: string }) {
           Pay Now on Kapruka
         </a>
       </Button>
-    </motion.div>
+    </div>
   );
 }

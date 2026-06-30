@@ -122,8 +122,8 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
             "sm:scroll-px-6",
           )}
         >
-          {products.map((product, i) => (
-            <ProductCard key={product.id} product={product} index={i} />
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} />
           ))}
           <div className="w-2 shrink-0 snap-none" aria-hidden />
         </div>

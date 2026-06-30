@@ -1,7 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
-
 const OCCASIONS = [
   { label: "Birthday", prompt: "Birthday gift ekak oni", emoji: "🎂" },
   { label: "Avurudu", prompt: "Avurudu gift package ekak", emoji: "🪔" },
@@ -17,18 +15,16 @@ export function OccasionChips({ onSelect }: { onSelect: (prompt: string) => void
   return (
     <div className="full-bleed-mobile w-full sm:mx-auto sm:max-w-full">
       <div className="carousel-track content-padding flex gap-2 overflow-x-auto pb-2 pt-1 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0 sm:pt-0">
-        {OCCASIONS.map((occ, i) => (
-          <motion.button
+        {OCCASIONS.map((occ) => (
+          <button
             key={occ.label}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 + i * 0.05 }}
+            type="button"
             onClick={() => onSelect(occ.prompt)}
             className="flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 bg-card/80 px-4 py-2.5 text-sm font-medium backdrop-blur-sm transition active:scale-95 hover:border-primary/40 hover:bg-primary/5 sm:px-3 sm:py-2 sm:text-xs"
           >
             <span className="text-base leading-none sm:text-sm">{occ.emoji}</span>
             {occ.label}
-          </motion.button>
+          </button>
         ))}
         <div className="w-2 shrink-0 sm:hidden" aria-hidden />
       </div>

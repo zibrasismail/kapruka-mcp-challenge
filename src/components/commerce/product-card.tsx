@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { Plus, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatLKR } from "@/lib/utils";
@@ -17,7 +16,7 @@ export interface ProductData {
   inStock?: boolean;
 }
 
-export function ProductCard({ product, index = 0 }: { product: ProductData; index?: number }) {
+export function ProductCard({ product }: { product: ProductData; index?: number }) {
   const addItem = useCartStore((s) => s.addItem);
 
   const handleAdd = () => {
@@ -31,12 +30,9 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08 }}
+    <div
       data-product-card
-      className="flex w-[min(68vw,13.5rem)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:w-56"
+      className="animate-fade-in flex w-[min(68vw,13.5rem)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:w-56"
     >
       <div className="relative aspect-4/5 bg-muted sm:aspect-square">
         {product.image ? (
@@ -55,7 +51,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
         )}
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3.5 sm:p-3">
-        <h3 className="line-clamp-2 text-sm font-medium leading-snug sm:text-sm">{product.name}</h3>
+        <h3 className="line-clamp-2 text-sm font-medium leading-snug">{product.name}</h3>
         <p className="text-sm font-semibold text-primary sm:text-base">{formatLKR(product.price)}</p>
         <div className="mt-auto flex gap-2">
           <Button size="sm" className="h-10 flex-1 text-sm sm:h-9" onClick={handleAdd}>
@@ -63,7 +59,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
             Add
           </Button>
           {product.url && (
-            <Button size="sm" variant="outline" className="h-9 shrink-0 px-3" asChild>
+            <Button size="sm" variant="outline" className="h-10 shrink-0 px-3 sm:h-9" asChild>
               <a href={product.url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-3.5" />
               </a>
@@ -71,6 +67,6 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
