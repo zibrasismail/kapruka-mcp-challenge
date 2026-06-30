@@ -3,12 +3,19 @@
 import { useChat } from "@ai-sdk/react";
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { DefaultChatTransport } from "ai";
-import { Send, Sparkles, Loader2, Mic, MicOff } from "lucide-react";
+import { Send, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { OccasionChips } from "./occasion-chips";
+import { SpeechControls } from "./speech-controls";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
-import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
+import {
+  getStoredSpeechLang,
+  storeSpeechLang,
+  useSpeechRecognition,
+  type SpeechEndReason,
+  type SpeechLanguageId,
+} from "@/lib/hooks/use-speech-recognition";
 import { ProductCarousel } from "@/components/commerce/product-carousel";
 import { CartPanel } from "@/components/commerce/cart-panel";
 import { PayLinkCard } from "@/components/commerce/pay-link-card";
@@ -36,10 +43,50 @@ export function ChatInterface() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const speechBaseRef = useRef("");
   const speechFinalRef = useRef("");
+  const inputValueRef = useRef("");
+  const holdActiveRef = useRef(false);
   const [input, setInput] = useState("");
+  const [speechLang, setSpeechLang] = useState<SpeechLanguageId>("si-LK");
   const isMobile = useIsMobile();
   const lastScrollHeightRef = useRef(0);
   const cartItems = useCartStore((s) => s.items);
+
+  useEffect(() => {
+    setSpeechLang(getStoredSpeechLang());
+  }, []);
+
+  useEffect(() => {
+    inputValueRef.current = input;
+  }, [input]);
+
+  const transport = useMemo(
+    () => new DefaultChatTransport({ api: "/api/chat" }),
+    [],
+  );
+
+  const onChatError = useCallback((err: Error) => {
+    console.error("[chat]", err);
+  }, []);
+
+  const { messages, sendMessage, status, error } = useChat({
+    transport,
+    onError: onChatError,
+  });
+
+  const isLoading = status === "submitted" || status === "streaming";
+
+  const sendSpokenMessage = useCallback(
+    async (text: string) => {
+      const msg = text.trim();
+      if (!msg || isLoading) return;
+      speechBaseRef.current = "";
+      speechFinalRef.current = "";
+      setInput("");
+      if (inputRef.current) inputRef.current.style.height = "auto";
+      await sendMessage({ text: msg });
+    },
+    [isLoading, sendMessage],
+  );
 
   const handleSpeechTranscript = useCallback((text: string, isFinal: boolean) => {
     const trimmed = text.trim();
@@ -60,28 +107,37 @@ export function ChatInterface() {
     }
   }, []);
 
-  const { isSupported: isSpeechSupported, isListening, toggle: toggleSpeech, stop: stopSpeech } =
-    useSpeechRecognition({
-      lang: "si-LK",
-      onTranscript: handleSpeechTranscript,
-      onError: (message) => toast.error(message),
-    });
+  const handleListeningEnd = useCallback(
+    (reason: SpeechEndReason) => {
+      if (reason === "no-speech") {
+        toast.message("Didn't catch that — tap Speak and try again.");
+        return;
+      }
 
-  const transport = useMemo(
-    () => new DefaultChatTransport({ api: "/api/chat" }),
-    [],
+      const msg =
+        [speechBaseRef.current, speechFinalRef.current]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || inputValueRef.current.trim();
+      if (!msg) return;
+
+      void sendSpokenMessage(msg);
+    },
+    [sendSpokenMessage],
   );
 
-  const onChatError = useCallback((err: Error) => {
-    console.error("[chat]", err);
-  }, []);
-
-  const { messages, sendMessage, status, error } = useChat({
-    transport,
-    onError: onChatError,
+  const {
+    isSupported: isSpeechSupported,
+    isListening,
+    start: startSpeech,
+    stop: stopSpeech,
+    cancel: cancelSpeech,
+  } = useSpeechRecognition({
+    lang: speechLang,
+    onTranscript: handleSpeechTranscript,
+    onError: (message) => toast.error(message),
+    onListeningEnd: handleListeningEnd,
   });
-
-  const isLoading = status === "submitted" || status === "streaming";
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -108,18 +164,42 @@ export function ChatInterface() {
     adjustTextareaHeight();
   }, [input, adjustTextareaHeight]);
 
+  const beginSpeechCapture = useCallback(() => {
+    speechBaseRef.current = inputValueRef.current;
+    speechFinalRef.current = "";
+    startSpeech();
+  }, [startSpeech]);
+
   const handleMicClick = () => {
     if (isListening) {
-      toggleSpeech();
+      stopSpeech();
       return;
     }
-    speechBaseRef.current = input;
-    speechFinalRef.current = "";
-    toggleSpeech();
+    beginSpeechCapture();
+    toast.message("Listening… pause to auto-send", { duration: 2200 });
+  };
+
+  const handleMicHoldStart = () => {
+    if (isLoading || isListening) return;
+    holdActiveRef.current = true;
+    beginSpeechCapture();
+    navigator.vibrate?.(12);
+  };
+
+  const handleMicHoldEnd = () => {
+    if (!holdActiveRef.current) return;
+    holdActiveRef.current = false;
+    stopSpeech();
+  };
+
+  const handleSpeechLangChange = (lang: SpeechLanguageId) => {
+    storeSpeechLang(lang);
+    setSpeechLang(lang);
+    if (isListening) cancelSpeech();
   };
 
   const handleSubmit = async (text?: string) => {
-    stopSpeech();
+    cancelSpeech();
     const msg = (text ?? input).trim();
     if (!msg || isLoading) return;
     setInput("");
@@ -326,12 +406,31 @@ export function ChatInterface() {
           }}
           className="mx-auto max-w-3xl"
         >
-          <div className="chat-composer flex min-h-11 items-end rounded-2xl border border-border/60 bg-background shadow-sm transition focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20">
+          {isSpeechSupported && (
+            <SpeechControls
+              isListening={isListening}
+              speechLang={speechLang}
+              isLoading={isLoading}
+              isMobile={isMobile}
+              onLangChange={handleSpeechLangChange}
+              onMicClick={handleMicClick}
+              onMicHoldStart={handleMicHoldStart}
+              onMicHoldEnd={handleMicHoldEnd}
+            />
+          )}
+          <div
+            className={cn(
+              "chat-composer flex min-h-11 items-end rounded-2xl border bg-background shadow-sm transition focus-within:ring-2 focus-within:ring-primary/20",
+              isListening
+                ? "border-primary/50 ring-2 ring-primary/15"
+                : "border-border/60 focus-within:border-primary/50",
+            )}
+          >
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => {
-                if (isListening) stopSpeech();
+                if (isListening) cancelSpeech();
                 setInput(e.target.value);
               }}
               onFocus={() => {
@@ -347,39 +446,16 @@ export function ChatInterface() {
                 }
               }}
               placeholder={
-                isMobile
-                  ? "Ask in Sinhala, English…"
-                  : "Type in Sinhala, English, or Tanglish..."
+                isListening
+                  ? "Speak now…"
+                  : isMobile
+                    ? "Ask in Sinhala, English…"
+                    : "Type in Sinhala, English, or Tanglish..."
               }
               rows={1}
               enterKeyHint={isMobile ? "enter" : "send"}
               className="max-h-32 min-h-11 min-w-0 flex-1 resize-none border-0 bg-transparent px-3.5 py-2.5 text-base leading-snug outline-none placeholder:leading-snug placeholder:text-muted-foreground/75 sm:px-4 sm:py-3 sm:text-sm"
             />
-            {isSpeechSupported && (
-              <Button
-                type="button"
-                variant={isListening ? "default" : "ghost"}
-                size="icon"
-                onClick={handleMicClick}
-                disabled={isLoading}
-                aria-label={isListening ? "Stop listening" : "Speak your message"}
-                aria-pressed={isListening}
-                className={cn(
-                  "m-1 size-9 shrink-0 rounded-xl sm:m-1.5 sm:size-10",
-                  isListening &&
-                    "relative bg-destructive text-white hover:bg-destructive/90",
-                )}
-              >
-                {isListening ? (
-                  <>
-                    <span className="absolute inset-0 animate-ping-soft rounded-xl bg-destructive/40" />
-                    <MicOff className="relative size-4" />
-                  </>
-                ) : (
-                  <Mic className="size-4" />
-                )}
-              </Button>
-            )}
             <Button
               type="submit"
               size="icon"

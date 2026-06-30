@@ -61,6 +61,7 @@ export function useSpeechRecognition(options?: {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const wantListeningRef = useRef(false);
   const manualStopRef = useRef(false);
+  const skipEndCallbackRef = useRef(false);
   const endReasonRef = useRef<SpeechEndReason>("manual");
   const hasTranscriptRef = useRef(false);
   const listenStartedAtRef = useRef(0);
@@ -130,7 +131,9 @@ export function useSpeechRecognition(options?: {
           onTranscriptRef.current?.(final, true);
           scheduleSilenceCheck();
         } else if (interim.trim()) {
+          hasTranscriptRef.current = true;
           onTranscriptRef.current?.(interim, false);
+          scheduleSilenceCheck();
         }
       };
 
@@ -176,13 +179,24 @@ export function useSpeechRecognition(options?: {
         }
 
         setIsListening(false);
-        if (manualStopRef.current) {
+        if (manualStopRef.current && !skipEndCallbackRef.current) {
           onListeningEndRef.current?.(endReasonRef.current);
         }
+        skipEndCallbackRef.current = false;
       };
     },
     [clearTimers, lang, scheduleSilenceCheck],
   );
+
+  const cancel = useCallback(() => {
+    wantListeningRef.current = false;
+    manualStopRef.current = true;
+    skipEndCallbackRef.current = true;
+    clearTimers();
+    recognitionRef.current?.abort();
+    recognitionRef.current = null;
+    setIsListening(false);
+  }, [clearTimers]);
 
   const stop = useCallback(() => {
     if (!wantListeningRef.current && !recognitionRef.current) return;
@@ -245,7 +259,7 @@ export function useSpeechRecognition(options?: {
     [clearTimers],
   );
 
-  return { isSupported, isListening, start, stop, toggle };
+  return { isSupported, isListening, start, stop, cancel, toggle };
 }
 
 export function getStoredSpeechLang(): SpeechLanguageId {
