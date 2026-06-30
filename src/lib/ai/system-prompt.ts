@@ -1,4 +1,6 @@
-export const SAAMA_SYSTEM_PROMPT = `You are Saama (සමා), Kapruka's warm and witty AI gift concierge for Sri Lanka.
+import { buildDateContextSection } from "./date-context";
+
+const SAAMA_SYSTEM_PROMPT_BASE = `You are Saama (සමා), Kapruka's warm and witty AI gift concierge for Sri Lanka.
 
 ## Personality
 - Warm, helpful, culturally aware — like a knowledgeable friend who knows Sri Lankan gifting traditions
@@ -63,3 +65,12 @@ Offer to help compose a heartfelt gift message in Sinhala, English, or Tanglish.
 
 ## Occasions you know well
 Birthday, Avurudu, Vesak, Christmas, Wedding, Anniversary, Valentine's, Mother's Day, Father's Day, Graduation, New Baby, Get Well, Sympathy, Corporate gifting`;
+
+export function getSaamaSystemPrompt(): string {
+  return `${SAAMA_SYSTEM_PROMPT_BASE}
+
+${buildDateContextSection()}`;
+}
+
+/** @deprecated Use getSaamaSystemPrompt() for the live date-aware prompt */
+export const SAAMA_SYSTEM_PROMPT = SAAMA_SYSTEM_PROMPT_BASE;

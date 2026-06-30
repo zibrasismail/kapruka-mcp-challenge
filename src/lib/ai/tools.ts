@@ -58,7 +58,11 @@ export const kaprukaTools = {
       "Check if delivery is available to a city on a date. Required before ordering cakes/flowers.",
     inputSchema: z.object({
       city: z.string().describe("Canonical delivery city name"),
-      delivery_date: z.string().describe("Delivery date YYYY-MM-DD"),
+      delivery_date: z
+        .string()
+        .describe(
+          "Delivery date YYYY-MM-DD (Asia/Colombo). Must be today or a future date — resolve year from current date context."
+        ),
       product_id: z.string().optional().describe("Product ID for perishable check"),
     }),
     execute: async (params) => callKaprukaTool("kapruka_check_delivery", params),
@@ -95,7 +99,11 @@ export const kaprukaTools = {
         city: z
           .string()
           .describe("Canonical Kapruka city from list_delivery_cities (e.g. 'Colombo 03')"),
-        date: z.string().describe("Delivery date YYYY-MM-DD"),
+        date: z
+          .string()
+          .describe(
+            "Delivery date YYYY-MM-DD (Asia/Colombo). Must be today or a future date — resolve year from current date context."
+          ),
         location_type: z
           .enum(["house", "apartment", "office", "other"])
           .optional()

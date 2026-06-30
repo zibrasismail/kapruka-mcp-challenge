@@ -6,7 +6,7 @@ import {
   isStepCount,
   type UIMessage,
 } from "ai";
-import { SAAMA_SYSTEM_PROMPT } from "@/lib/ai/system-prompt";
+import { getSaamaSystemPrompt } from "@/lib/ai/system-prompt";
 import { kaprukaTools } from "@/lib/ai/tools";
 import { getModel, getModelChain } from "@/lib/ai/provider";
 
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       try {
         const result = streamText({
           model: getModel(modelId),
-          instructions: SAAMA_SYSTEM_PROMPT,
+          instructions: getSaamaSystemPrompt(),
           messages: modelMessages,
           tools: kaprukaTools,
           stopWhen: isStepCount(5),
