@@ -56,6 +56,7 @@ export function ChatInterface() {
   const isMobile = useIsMobile();
   const lastScrollHeightRef = useRef(0);
   const cartItems = useCartStore((s) => s.items);
+  const addToCart = useCartStore((s) => s.addItem);
 
   useEffect(() => {
     setSpeechLang(getStoredSpeechLang());
@@ -262,10 +263,10 @@ export function ChatInterface() {
   }, [checkoutPending, messages, toolProducts.length]);
 
   useEffect(() => {
-    if (shouldShowProductCarousel(messages)) {
+    if (checkoutPending && shouldShowProductCarousel(messages)) {
       setCheckoutPending(false);
     }
-  }, [messages]);
+  }, [checkoutPending, messages]);
 
   return (
     <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background">

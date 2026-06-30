@@ -4,15 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductCard, type ProductData } from "./product-card";
+import {
+  pendingEnrichmentKeys,
+  productImageCache,
+} from "@/lib/product-image-cache";
 import { cn } from "@/lib/utils";
 
-function mergeProductImages(
-  products: ProductData[],
-  cache: ReadonlyMap<string, string>,
-): ProductData[] {
+function mergeProductImages(products: ProductData[]): ProductData[] {
   return products.map((p) => ({
     ...p,
-    image: p.image ?? cache.get(p.id),
+    image: p.image ?? productImageCache.get(p.id),
   }));
 }
 
@@ -22,44 +23,55 @@ function productsSignature(products: ProductData[]): string {
     .join("|");
 }
 
+function productsEqual(a: ProductData[], b: ProductData[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every(
+    (p, i) =>
+      p.id === b[i].id &&
+      p.image === b[i].image &&
+      p.name === b[i].name &&
+      p.price === b[i].price &&
+      p.url === b[i].url,
+  );
+}
+
 export function ProductCarousel({ products }: { products: ProductData[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const frameRef = useRef(0);
-  const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const measureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollStateRef = useRef({ left: false, right: false });
-  const imageCacheRef = useRef(new Map<string, string>());
-  const pendingFetchRef = useRef<string | null>(null);
 
   const signature = useMemo(() => productsSignature(products), [products]);
   const productsRef = useRef(products);
   productsRef.current = products;
 
   const [displayProducts, setDisplayProducts] = useState(() =>
-    mergeProductImages(products, imageCacheRef.current),
+    mergeProductImages(products),
   );
   const [isEnriching, setIsEnriching] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
+  const applyDisplayProducts = useCallback((next: ProductData[]) => {
+    setDisplayProducts((prev) => (productsEqual(prev, next) ? prev : next));
+  }, []);
+
   useEffect(() => {
     const currentProducts = productsRef.current;
-    const merged = mergeProductImages(currentProducts, imageCacheRef.current);
-    setDisplayProducts(merged);
+    applyDisplayProducts(mergeProductImages(currentProducts));
 
     const missingIds = currentProducts
-      .filter((p) => !p.image && !imageCacheRef.current.has(p.id))
+      .filter((p) => !p.image && !productImageCache.has(p.id))
       .map((p) => p.id);
 
     if (!missingIds.length) {
       setIsEnriching(false);
-      pendingFetchRef.current = null;
       return;
     }
 
     const fetchKey = missingIds.join(",");
-    if (pendingFetchRef.current === fetchKey) return;
+    if (pendingEnrichmentKeys.has(fetchKey)) return;
 
-    pendingFetchRef.current = fetchKey;
+    pendingEnrichmentKeys.add(fetchKey);
     let cancelled = false;
     setIsEnriching(true);
 
@@ -73,71 +85,63 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
         if (cancelled || !data?.images) return;
 
         for (const [id, url] of Object.entries(data.images)) {
-          imageCacheRef.current.set(id, url);
+          productImageCache.set(id, url);
         }
 
-        setDisplayProducts(
-          mergeProductImages(productsRef.current, imageCacheRef.current),
-        );
+        applyDisplayProducts(mergeProductImages(productsRef.current));
       })
       .catch(() => {})
       .finally(() => {
-        if (!cancelled) {
-          setIsEnriching(false);
-          pendingFetchRef.current = null;
-        }
+        pendingEnrichmentKeys.delete(fetchKey);
+        if (!cancelled) setIsEnriching(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [signature]);
+  }, [applyDisplayProducts, signature]);
 
-  const updateScrollState = useCallback(() => {
-    cancelAnimationFrame(frameRef.current);
-    frameRef.current = requestAnimationFrame(() => {
-      const el = trackRef.current;
-      if (!el) return;
+  const measureScrollState = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
 
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      const nextLeft = el.scrollLeft > 4;
-      const nextRight = maxScroll > 4 && el.scrollLeft < maxScroll - 4;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const nextLeft = el.scrollLeft > 4;
+    const nextRight = maxScroll > 4 && el.scrollLeft < maxScroll - 4;
 
-      if (
-        scrollStateRef.current.left === nextLeft &&
-        scrollStateRef.current.right === nextRight
-      ) {
-        return;
-      }
+    if (
+      scrollStateRef.current.left === nextLeft &&
+      scrollStateRef.current.right === nextRight
+    ) {
+      return;
+    }
 
-      scrollStateRef.current = { left: nextLeft, right: nextRight };
-      setCanScrollLeft(nextLeft);
-      setCanScrollRight(nextRight);
-    });
+    scrollStateRef.current = { left: nextLeft, right: nextRight };
+    setCanScrollLeft(nextLeft);
+    setCanScrollRight(nextRight);
   }, []);
 
-  const scheduleScrollStateUpdate = useCallback(() => {
-    if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
-    resizeTimerRef.current = setTimeout(updateScrollState, 120);
-  }, [updateScrollState]);
+  const scheduleMeasure = useCallback(() => {
+    if (measureTimerRef.current) clearTimeout(measureTimerRef.current);
+    measureTimerRef.current = setTimeout(measureScrollState, 150);
+  }, [measureScrollState]);
 
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
 
-    updateScrollState();
-    el.addEventListener("scroll", scheduleScrollStateUpdate, { passive: true });
-
-    const observer = new ResizeObserver(scheduleScrollStateUpdate);
-    observer.observe(el);
+    scheduleMeasure();
+    el.addEventListener("scroll", scheduleMeasure, { passive: true });
 
     return () => {
-      cancelAnimationFrame(frameRef.current);
-      if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
-      el.removeEventListener("scroll", scheduleScrollStateUpdate);
-      observer.disconnect();
+      if (measureTimerRef.current) clearTimeout(measureTimerRef.current);
+      el.removeEventListener("scroll", scheduleMeasure);
     };
-  }, [signature, scheduleScrollStateUpdate, updateScrollState]);
+  }, [signature, scheduleMeasure]);
+
+  const handleImageReady = useCallback(() => {
+    scheduleMeasure();
+  }, [scheduleMeasure]);
 
   const scroll = (direction: "left" | "right") => {
     const el = trackRef.current;
@@ -213,6 +217,7 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
               key={product.id}
               product={product}
               imagePending={isEnriching && !product.image}
+              onImageReady={handleImageReady}
             />
           ))}
           <div className="w-2 shrink-0 snap-none" aria-hidden />
