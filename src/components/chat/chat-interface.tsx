@@ -66,10 +66,13 @@ export function ChatInterface() {
 
   const handleCheckout = () => {
     const cartSummary = cartItems
-      .map((i) => `- ${i.name} (ID: ${i.productId}) x${i.quantity} @ LKR ${i.price}`)
+      .map(
+        (i) =>
+          `- ${i.name} (ID: ${i.productId}) x${i.quantity} @ LKR ${i.price}`,
+      )
       .join("\n");
     handleSubmit(
-      `I'm ready to checkout. Here's my cart:\n${cartSummary}\n\nPlease help me complete the order with delivery details.`
+      `I'm ready to checkout. Here's my cart:\n${cartSummary}\n\nPlease help me complete the order with delivery details.`,
     );
   };
 
@@ -80,7 +83,8 @@ export function ChatInterface() {
       for (const inv of getToolParts(msg)) {
         if (
           inv.state === "output-available" &&
-          (inv.toolName === "search_products" || inv.toolName === "get_product") &&
+          (inv.toolName === "search_products" ||
+            inv.toolName === "get_product") &&
           typeof inv.output === "string"
         ) {
           products.push(...parseProductsFromToolResult(inv.output));
@@ -106,7 +110,9 @@ export function ChatInterface() {
             <h1 className="truncate font-display text-base font-semibold leading-tight sm:text-lg">
               Kapruka <span className="text-primary">Saama</span>
             </h1>
-            <p className="truncate text-xs text-muted-foreground sm:text-[11px]">සමා · Gift Concierge</p>
+            <p className="truncate text-xs text-muted-foreground sm:text-[11px]">
+              සමා · Gift Concierge
+            </p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -144,115 +150,119 @@ export function ChatInterface() {
         )}
 
         <div className="flex flex-col gap-3 sm:gap-4">
-            {messages.map((msg, index) => {
-              const isLastMessage = index === messages.length - 1;
-              const displayText =
-                msg.role === "assistant"
-                  ? getDisplayMessageText(msg, {
-                      isLastMessage,
-                      isStreaming: isLoading,
-                    })
-                  : getMessageText(msg);
-              const activeTools = getActiveToolLoads(msg);
-              const showThinking =
-                msg.role === "assistant" &&
-                isAssistantTurnInProgress(msg, {
-                  isLastMessage,
-                  isStreaming: isLoading,
-                }) &&
-                activeTools.length === 0;
+          {messages.map((msg, index) => {
+            const isLastMessage = index === messages.length - 1;
+            const displayText =
+              msg.role === "assistant"
+                ? getDisplayMessageText(msg, {
+                    isLastMessage,
+                    isStreaming: isLoading,
+                  })
+                : getMessageText(msg);
+            const activeTools = getActiveToolLoads(msg);
+            const showThinking =
+              msg.role === "assistant" &&
+              isAssistantTurnInProgress(msg, {
+                isLastMessage,
+                isStreaming: isLoading,
+              }) &&
+              activeTools.length === 0;
 
-              return (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={cn(
-                    "flex",
-                    msg.role === "user" ? "justify-end" : "justify-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "rounded-2xl px-4 py-3 text-sm leading-relaxed sm:px-4 sm:py-3",
-                      msg.role === "user"
-                        ? "max-w-[min(90%,20rem)] wrap-break-word text-left bg-primary text-primary-foreground rounded-br-md sm:max-w-[85%]"
-                        : "w-full min-w-0 max-w-full bg-card border border-border/50 rounded-bl-md shadow-sm sm:max-w-[min(100%,42rem)]"
-                    )}
-                  >
-                    {msg.role === "assistant" && (
-                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                        Saama
-                      </p>
-                    )}
-                    {msg.role === "assistant" ? (
-                      <MarkdownMessage content={displayText} />
-                    ) : (
-                      <div className="wrap-break-word whitespace-pre-wrap">{displayText}</div>
-                    )}
-
-                    {activeTools.map((inv) => (
-                      <ToolStatusCard
-                        key={inv.toolCallId}
-                        toolName={inv.toolName}
-                        variant="loading"
-                      />
-                    ))}
-
-                    {showThinking && <ThinkingLoader />}
-
-                    {getToolParts(msg).map((inv) => {
-                      if (inv.state === "output-error") {
-                        return (
-                          <ToolStatusCard
-                            key={inv.toolCallId}
-                            toolName={inv.toolName}
-                            variant="error"
-                            detail={inv.errorText}
-                          />
-                        );
-                      }
-                      if (
-                        inv.state === "output-available" &&
-                        inv.toolName === "create_order" &&
-                        typeof inv.output === "string"
-                      ) {
-                        return <PayLinkCard key={inv.toolCallId} text={inv.output} />;
-                      }
-                      return null;
-                    })}
-                  </div>
-                </motion.div>
-              );
-            })}
-
-            {isLoading && messages[messages.length - 1]?.role === "user" && (
+            return (
               <motion.div
+                key={msg.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex justify-start"
+                className={cn(
+                  "flex",
+                  msg.role === "user" ? "justify-end" : "justify-start",
+                )}
               >
-                <div className="w-full min-w-0 max-w-full rounded-2xl border border-border/50 bg-card px-4 py-3 shadow-sm rounded-bl-md sm:max-w-[min(100%,42rem)]">
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                    Saama
-                  </p>
-                  <ThinkingLoader />
+                <div
+                  className={cn(
+                    "rounded-2xl px-4 py-3 text-sm leading-relaxed sm:px-4 sm:py-3",
+                    msg.role === "user"
+                      ? "max-w-[min(90%,20rem)] wrap-break-word text-left bg-primary text-primary-foreground rounded-br-md sm:max-w-[85%]"
+                      : "w-full min-w-0 max-w-full bg-card border border-border/50 rounded-bl-md shadow-sm sm:max-w-[min(100%,42rem)]",
+                  )}
+                >
+                  {msg.role === "assistant" && (
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                      Saama
+                    </p>
+                  )}
+                  {msg.role === "assistant" ? (
+                    <MarkdownMessage content={displayText} />
+                  ) : (
+                    <div className="wrap-break-word whitespace-pre-wrap">
+                      {displayText}
+                    </div>
+                  )}
+
+                  {activeTools.map((inv) => (
+                    <ToolStatusCard
+                      key={inv.toolCallId}
+                      toolName={inv.toolName}
+                      variant="loading"
+                    />
+                  ))}
+
+                  {showThinking && <ThinkingLoader />}
+
+                  {getToolParts(msg).map((inv) => {
+                    if (inv.state === "output-error") {
+                      return (
+                        <ToolStatusCard
+                          key={inv.toolCallId}
+                          toolName={inv.toolName}
+                          variant="error"
+                          detail={inv.errorText}
+                        />
+                      );
+                    }
+                    if (
+                      inv.state === "output-available" &&
+                      inv.toolName === "create_order" &&
+                      typeof inv.output === "string"
+                    ) {
+                      return (
+                        <PayLinkCard key={inv.toolCallId} text={inv.output} />
+                      );
+                    }
+                    return null;
+                  })}
                 </div>
               </motion.div>
-            )}
-          </div>
+            );
+          })}
 
-          <AnimatePresence>
-            {toolProducts.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <ProductCarousel products={toolProducts} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {isLoading && messages[messages.length - 1]?.role === "user" && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-start"
+            >
+              <div className="w-full min-w-0 max-w-full rounded-2xl border border-border/50 bg-card px-4 py-3 shadow-sm rounded-bl-md sm:max-w-[min(100%,42rem)]">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                  Saama
+                </p>
+                <ThinkingLoader />
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {toolProducts.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <ProductCarousel products={toolProducts} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {error && (
           <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">
@@ -263,7 +273,9 @@ export function ChatInterface() {
 
       <div
         className="safe-bottom content-padding shrink-0 border-t border-border/50 bg-card/70 py-3 backdrop-blur-xl sm:py-3.5"
-        style={keyboardOffset > 0 ? { paddingBottom: keyboardOffset } : undefined}
+        style={
+          keyboardOffset > 0 ? { paddingBottom: keyboardOffset } : undefined
+        }
       >
         <form
           onSubmit={(e) => {
@@ -278,7 +290,9 @@ export function ChatInterface() {
             onChange={(e) => setInput(e.target.value)}
             onFocus={() => {
               requestAnimationFrame(() => {
-                scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+                scrollRef.current?.scrollTo({
+                  top: scrollRef.current.scrollHeight,
+                });
               });
             }}
             onKeyDown={(e) => {
@@ -410,7 +424,9 @@ function ToolStatusCard({
         <p className="text-sm font-medium text-foreground">
           {toolLabel(toolName)}…
         </p>
-        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{toolHint(toolName)}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+          {toolHint(toolName)}
+        </p>
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-primary/10">
           <motion.div
             className="h-full rounded-full bg-primary/60"
