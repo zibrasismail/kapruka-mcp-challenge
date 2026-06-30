@@ -8,6 +8,7 @@ import { Send, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OccasionChips } from "./occasion-chips";
 import { useKeyboardOffset } from "@/lib/hooks/use-visual-viewport";
+import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { ProductCarousel } from "@/components/commerce/product-carousel";
 import { CartPanel } from "@/components/commerce/cart-panel";
 import { PayLinkCard } from "@/components/commerce/pay-link-card";
@@ -35,6 +36,7 @@ export function ChatInterface() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
   const keyboardOffset = useKeyboardOffset();
+  const isMobile = useIsMobile();
   const cartItems = useCartStore((s) => s.items);
 
   const { messages, sendMessage, status, error } = useChat({
@@ -53,10 +55,18 @@ export function ChatInterface() {
     });
   }, [messages, isLoading]);
 
+  const adjustTextareaHeight = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+  };
+
   const handleSubmit = async (text?: string) => {
     const msg = (text ?? input).trim();
     if (!msg || isLoading) return;
     setInput("");
+    if (inputRef.current) inputRef.current.style.height = "auto";
     await sendMessage({ text: msg });
   };
 
@@ -285,7 +295,10 @@ export function ChatInterface() {
           <textarea
             ref={inputRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              adjustTextareaHeight();
+            }}
             onFocus={() => {
               requestAnimationFrame(() => {
                 scrollRef.current?.scrollTo({
@@ -294,6 +307,7 @@ export function ChatInterface() {
               });
             }}
             onKeyDown={(e) => {
+              if (isMobile) return;
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSubmit();
@@ -301,7 +315,7 @@ export function ChatInterface() {
             }}
             placeholder="Type in Sinhala, English, or Tanglish..."
             rows={1}
-            enterKeyHint="send"
+            enterKeyHint={isMobile ? "enter" : "send"}
             className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-border/60 bg-background px-4 py-3 text-base leading-normal outline-none transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/20 sm:text-sm"
           />
           <Button
