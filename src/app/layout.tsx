@@ -1,19 +1,12 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { DM_Sans, Playfair_Display, Noto_Sans_Sinhala } from "next/font/google";
+import { GeistMono } from "geist/font/mono";
+import { Noto_Sans_Sinhala } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-});
+const geistMono = GeistMono;
 
 const notoSinhala = Noto_Sans_Sinhala({
   subsets: ["sinhala"],
@@ -43,7 +36,9 @@ const themeInitScript = `(function(){try{var t=localStorage.getItem("theme")||"s
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmSans.variable} ${playfair.variable} ${notoSinhala.variable} antialiased`}>
+      <body
+        className={`${geistMono.variable} ${notoSinhala.variable} ${geistMono.className} antialiased`}
+      >
         <Script id="theme-init" strategy="beforeInteractive">
           {themeInitScript}
         </Script>
