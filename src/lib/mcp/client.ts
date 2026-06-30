@@ -47,6 +47,43 @@ function extractText(result: {
     .join("\n");
 }
 
+function friendlyMcpError(toolName: string, text: string): string {
+  const trimmed = text.trim();
+
+  if (trimmed.startsWith("Error executing tool")) {
+    const validation = trimmed.match(
+      /params\.(\w+(?:\.\w+)?)\s+[\s\S]*?input_value='([^']*)'/
+    );
+    if (validation) {
+      const [, field, value] = validation;
+      if (field.includes("delivery.address")) {
+        return "Delivery street address is required — put it in delivery.address, not recipient.";
+      }
+      if (field.includes("recipient.address")) {
+        return "Address must go in delivery.address, not recipient.";
+      }
+      if (field.includes("sender.phone") || field.includes("sender.email")) {
+        return "Sender only needs a name — no phone or email required.";
+      }
+      return `Invalid field ${field}${value ? ` (got "${value}")` : ""}.`;
+    }
+    return trimmed.replace(/^Error executing tool \w+: /, "");
+  }
+
+  if (trimmed.startsWith("Error (")) {
+    const code = trimmed.match(/^Error \(([^)]+)\):/)?.[1];
+    const msg = trimmed.replace(/^Error \([^)]+\):\s*/, "");
+
+    if (code === "city_not_found" || code === "city_not_deliverable") {
+      return `${msg} Use list_delivery_cities to find the exact Kapruka city name (e.g. "Colombo 03").`;
+    }
+
+    return msg || trimmed;
+  }
+
+  return trimmed || `${toolName} failed with no details`;
+}
+
 /** Strip verbose fields so less tokens go back to the LLM (faster follow-up turns). */
 function compactToolResult(toolName: string, text: string): string {
   try {
@@ -115,7 +152,17 @@ export async function callKaprukaTool(
       );
     }),
   ]);
-  const raw = extractText(result as { content?: Array<{ type: string; text?: string }> });
+
+  const typed = result as {
+    isError?: boolean;
+    content?: Array<{ type: string; text?: string }>;
+  };
+  const raw = extractText(typed);
+
+  if (typed.isError || raw.startsWith("Error executing tool") || raw.startsWith("Error (")) {
+    throw new Error(friendlyMcpError(name, raw));
+  }
+
   const compact = compactToolResult(name, raw);
 
   if (process.env.NODE_ENV === "development") {

@@ -66,32 +66,51 @@ export const kaprukaTools = {
 
   create_order: tool({
     description:
-      "Create guest checkout order. Returns click-to-pay URL. Prices locked 60 minutes.",
+      "Create guest checkout order. Returns click-to-pay URL. Prices locked 60 minutes. " +
+      "City must be a canonical Kapruka delivery city (use list_delivery_cities first). " +
+      "Delivery address goes in delivery.address, not recipient.",
     inputSchema: z.object({
       cart: z
         .array(
           z.object({
-            product_id: z.string(),
-            quantity: z.number().min(1),
-            variant: z.string().optional(),
+            product_id: z.string().describe("Kapruka product ID"),
+            quantity: z.number().min(1).max(99).default(1),
+            icing_text: z
+              .string()
+              .optional()
+              .describe("Cake icing text — ignored for non-cake products"),
           })
         )
-        .describe("Cart items"),
+        .min(1)
+        .max(30)
+        .describe("Cart items (1–30)"),
       recipient: z.object({
-        name: z.string(),
-        phone: z.string(),
-        address: z.string(),
+        name: z.string().describe("Recipient name on the order"),
+        phone: z
+          .string()
+          .describe("Recipient phone — E.164 (+9477…) or local SL (077…) format"),
       }),
       delivery: z.object({
-        city: z.string(),
-        date: z.string().describe("YYYY-MM-DD"),
+        address: z.string().describe("Street delivery address"),
+        city: z
+          .string()
+          .describe("Canonical Kapruka city from list_delivery_cities (e.g. 'Colombo 03')"),
+        date: z.string().describe("Delivery date YYYY-MM-DD"),
+        location_type: z
+          .enum(["house", "apartment", "office", "other"])
+          .optional()
+          .default("house"),
+        instructions: z.string().optional().describe("Free-form delivery instructions"),
       }),
       sender: z.object({
-        name: z.string(),
-        phone: z.string(),
-        email: z.string().email(),
+        name: z.string().describe("Sender name on the gift card"),
+        anonymous: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe("If true, gift card shows 'Anonymous'"),
       }),
-      gift_message: z.string().optional(),
+      gift_message: z.string().max(300).optional(),
       currency: z.string().optional().default("LKR"),
     }),
     execute: async (params) => callKaprukaTool("kapruka_create_order", params),
