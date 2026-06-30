@@ -11,9 +11,11 @@ import { cn } from "@/lib/utils";
 type SpeechControlsProps = {
   isListening: boolean;
   speechLang: SpeechLanguageId;
+  speechAutoSend: boolean;
   isLoading: boolean;
   isMobile: boolean;
   onLangChange: (lang: SpeechLanguageId) => void;
+  onAutoSendChange: (enabled: boolean) => void;
   onMicClick: () => void;
   onMicHoldStart: () => void;
   onMicHoldEnd: () => void;
@@ -22,14 +24,27 @@ type SpeechControlsProps = {
 export function SpeechControls({
   isListening,
   speechLang,
+  speechAutoSend,
   isLoading,
   isMobile,
   onLangChange,
+  onAutoSendChange,
   onMicClick,
   onMicHoldStart,
   onMicHoldEnd,
 }: SpeechControlsProps) {
   const activeLang = SPEECH_LANGUAGES.find((l) => l.id === speechLang);
+
+  const listeningHint = speechAutoSend
+    ? isMobile
+      ? "Release to send · or pause to auto-send"
+      : "Pause speaking to auto-send · tap Stop to send now"
+    : isMobile
+      ? "Release when done · then tap send"
+      : "Tap Stop when done · then tap send";
+
+  const stopLabel = speechAutoSend ? (isMobile ? "Release" : "Send") : "Stop";
+  const startLabel = isMobile ? "Hold" : "Speak";
 
   return (
     <div className="mb-2 space-y-2">
@@ -47,11 +62,7 @@ export function SpeechControls({
             <p className="text-sm font-medium text-foreground">
               Listening in {activeLang?.name ?? "Sinhala"}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {isMobile
-                ? "Release the mic to send · or pause to auto-send"
-                : "Pause speaking to auto-send · tap mic to send now"}
-            </p>
+            <p className="text-xs text-muted-foreground">{listeningHint}</p>
           </div>
           <div className="flex shrink-0 items-end gap-0.5 pb-0.5" aria-hidden>
             {[0, 1, 2, 3].map((i) => (
@@ -66,28 +77,45 @@ export function SpeechControls({
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <div
-          className="flex gap-0.5 rounded-full border border-border/50 bg-muted/50 p-0.5"
-          role="group"
-          aria-label="Voice input language"
-        >
-          {SPEECH_LANGUAGES.map((lang) => (
-            <button
-              key={lang.id}
-              type="button"
-              disabled={isLoading}
-              onClick={() => onLangChange(lang.id)}
-              aria-pressed={speechLang === lang.id}
-              className={cn(
-                "rounded-full px-3 py-1 text-xs font-medium transition",
-                speechLang === lang.id
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {lang.label}
-            </button>
-          ))}
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <div
+            className="flex gap-0.5 rounded-full border border-border/50 bg-muted/50 p-0.5"
+            role="group"
+            aria-label="Voice input language"
+          >
+            {SPEECH_LANGUAGES.map((lang) => (
+              <button
+                key={lang.id}
+                type="button"
+                disabled={isLoading || isListening}
+                onClick={() => onLangChange(lang.id)}
+                aria-pressed={speechLang === lang.id}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs font-medium transition",
+                  speechLang === lang.id
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            disabled={isLoading || isListening}
+            onClick={() => onAutoSendChange(!speechAutoSend)}
+            aria-pressed={speechAutoSend}
+            className={cn(
+              "rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
+              speechAutoSend
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-border/50 bg-muted/50 text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Auto-send {speechAutoSend ? "on" : "off"}
+          </button>
         </div>
 
         <Button
@@ -115,16 +143,18 @@ export function SpeechControls({
           disabled={isLoading}
           aria-label={
             isListening
-              ? isMobile
-                ? "Release to send"
-                : "Stop and send"
+              ? speechAutoSend
+                ? isMobile
+                  ? "Release to send"
+                  : "Stop and send"
+                : "Stop listening"
               : isMobile
                 ? "Hold to speak"
                 : "Speak your message"
           }
           aria-pressed={isListening}
           className={cn(
-            "h-8 gap-1.5 rounded-full px-3 text-xs",
+            "h-8 shrink-0 gap-1.5 rounded-full px-3 text-xs",
             isListening &&
               "relative border-destructive/30 bg-destructive text-white hover:bg-destructive/90",
           )}
@@ -132,12 +162,12 @@ export function SpeechControls({
           {isListening ? (
             <>
               <MicOff className="size-3.5" />
-              <span>{isMobile ? "Release" : "Send"}</span>
+              <span>{stopLabel}</span>
             </>
           ) : (
             <>
               <Mic className="size-3.5" />
-              <span>{isMobile ? "Hold" : "Speak"}</span>
+              <span>{startLabel}</span>
             </>
           )}
         </Button>

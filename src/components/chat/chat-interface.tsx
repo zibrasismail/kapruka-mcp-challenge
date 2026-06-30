@@ -10,7 +10,9 @@ import { OccasionChips } from "./occasion-chips";
 import { SpeechControls } from "./speech-controls";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import {
+  getStoredSpeechAutoSend,
   getStoredSpeechLang,
+  storeSpeechAutoSend,
   storeSpeechLang,
   useSpeechRecognition,
   type SpeechEndReason,
@@ -47,12 +49,14 @@ export function ChatInterface() {
   const holdActiveRef = useRef(false);
   const [input, setInput] = useState("");
   const [speechLang, setSpeechLang] = useState<SpeechLanguageId>("si-LK");
+  const [speechAutoSend, setSpeechAutoSend] = useState(false);
   const isMobile = useIsMobile();
   const lastScrollHeightRef = useRef(0);
   const cartItems = useCartStore((s) => s.items);
 
   useEffect(() => {
     setSpeechLang(getStoredSpeechLang());
+    setSpeechAutoSend(getStoredSpeechAutoSend());
   }, []);
 
   useEffect(() => {
@@ -119,11 +123,19 @@ export function ChatInterface() {
           .filter(Boolean)
           .join(" ")
           .trim() || inputValueRef.current.trim();
+
       if (!msg) return;
 
-      void sendSpokenMessage(msg);
+      if (speechAutoSend) {
+        void sendSpokenMessage(msg);
+        return;
+      }
+
+      if (reason === "manual") {
+        toast.message("Review your message, then tap send");
+      }
     },
-    [sendSpokenMessage],
+    [sendSpokenMessage, speechAutoSend],
   );
 
   const {
@@ -134,6 +146,7 @@ export function ChatInterface() {
     cancel: cancelSpeech,
   } = useSpeechRecognition({
     lang: speechLang,
+    autoStopOnSilence: speechAutoSend,
     onTranscript: handleSpeechTranscript,
     onError: (message) => toast.error(message),
     onListeningEnd: handleListeningEnd,
@@ -176,7 +189,12 @@ export function ChatInterface() {
       return;
     }
     beginSpeechCapture();
-    toast.message("Listening… pause to auto-send", { duration: 2200 });
+    toast.message(
+      speechAutoSend
+        ? "Listening… pause to auto-send"
+        : "Listening… tap Stop when done",
+      { duration: 2200 },
+    );
   };
 
   const handleMicHoldStart = () => {
@@ -196,6 +214,11 @@ export function ChatInterface() {
     storeSpeechLang(lang);
     setSpeechLang(lang);
     if (isListening) cancelSpeech();
+  };
+
+  const handleSpeechAutoSendChange = (enabled: boolean) => {
+    storeSpeechAutoSend(enabled);
+    setSpeechAutoSend(enabled);
   };
 
   const handleSubmit = async (text?: string) => {
@@ -410,9 +433,11 @@ export function ChatInterface() {
             <SpeechControls
               isListening={isListening}
               speechLang={speechLang}
+              speechAutoSend={speechAutoSend}
               isLoading={isLoading}
               isMobile={isMobile}
               onLangChange={handleSpeechLangChange}
+              onAutoSendChange={handleSpeechAutoSendChange}
               onMicClick={handleMicClick}
               onMicHoldStart={handleMicHoldStart}
               onMicHoldEnd={handleMicHoldEnd}

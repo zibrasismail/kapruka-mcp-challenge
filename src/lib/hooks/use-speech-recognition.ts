@@ -38,22 +38,31 @@ const NO_SPEECH_MS = 8_000;
 export function useSpeechRecognition(options?: {
   lang?: string;
   silenceMs?: number;
+  autoStopOnSilence?: boolean;
   onTranscript?: (text: string, isFinal: boolean) => void;
   onError?: (message: string) => void;
   onListeningEnd?: (reason: SpeechEndReason) => void;
 }) {
   const lang = options?.lang ?? "si-LK";
   const silenceMs = options?.silenceMs ?? SILENCE_MS;
+  const autoStopOnSilence = options?.autoStopOnSilence ?? false;
 
   const onTranscriptRef = useRef(options?.onTranscript);
   const onErrorRef = useRef(options?.onError);
   const onListeningEndRef = useRef(options?.onListeningEnd);
+  const autoStopOnSilenceRef = useRef(autoStopOnSilence);
 
   useEffect(() => {
     onTranscriptRef.current = options?.onTranscript;
     onErrorRef.current = options?.onError;
     onListeningEndRef.current = options?.onListeningEnd;
-  }, [options?.onTranscript, options?.onError, options?.onListeningEnd]);
+    autoStopOnSilenceRef.current = options?.autoStopOnSilence ?? false;
+  }, [
+    options?.onTranscript,
+    options?.onError,
+    options?.onListeningEnd,
+    options?.autoStopOnSilence,
+  ]);
 
   const [isSupported] = useState(() => !!getSpeechRecognitionCtor());
   const [isListening, setIsListening] = useState(false);
@@ -99,7 +108,7 @@ export function useSpeechRecognition(options?: {
     silenceTimerRef.current = setTimeout(() => {
       if (!wantListeningRef.current) return;
 
-      if (hasTranscriptRef.current) {
+      if (hasTranscriptRef.current && autoStopOnSilenceRef.current) {
         finishListening("silence");
         return;
       }
@@ -270,4 +279,13 @@ export function getStoredSpeechLang(): SpeechLanguageId {
 
 export function storeSpeechLang(lang: SpeechLanguageId) {
   localStorage.setItem("saama-speech-lang", lang);
+}
+
+export function getStoredSpeechAutoSend(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem("saama-speech-auto-send") === "true";
+}
+
+export function storeSpeechAutoSend(enabled: boolean) {
+  localStorage.setItem("saama-speech-auto-send", enabled ? "true" : "false");
 }
