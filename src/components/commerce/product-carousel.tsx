@@ -8,17 +8,32 @@ import { cn } from "@/lib/utils";
 
 export function ProductCarousel({ products }: { products: ProductData[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef(0);
+  const scrollStateRef = useRef({ left: false, right: false });
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const updateScrollState = useCallback(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    const nextLeft = el.scrollLeft > 4;
-    const nextRight = el.scrollLeft < maxScroll - 4;
-    setCanScrollLeft((prev) => (prev === nextLeft ? prev : nextLeft));
-    setCanScrollRight((prev) => (prev === nextRight ? prev : nextRight));
+    cancelAnimationFrame(frameRef.current);
+    frameRef.current = requestAnimationFrame(() => {
+      const el = trackRef.current;
+      if (!el) return;
+
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      const nextLeft = el.scrollLeft > 4;
+      const nextRight = el.scrollLeft < maxScroll - 4;
+
+      if (
+        scrollStateRef.current.left === nextLeft &&
+        scrollStateRef.current.right === nextRight
+      ) {
+        return;
+      }
+
+      scrollStateRef.current = { left: nextLeft, right: nextRight };
+      setCanScrollLeft(nextLeft);
+      setCanScrollRight(nextRight);
+    });
   }, []);
 
   useEffect(() => {
@@ -32,10 +47,11 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
     observer.observe(el);
 
     return () => {
+      cancelAnimationFrame(frameRef.current);
       el.removeEventListener("scroll", updateScrollState);
       observer.disconnect();
     };
-  }, [products, updateScrollState]);
+  }, [products.length, updateScrollState]);
 
   const scroll = (direction: "left" | "right") => {
     const el = trackRef.current;
@@ -103,7 +119,7 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
           className={cn(
             "carousel-track flex gap-3 overflow-x-auto pb-2 pt-0.5 snap-x snap-mandatory",
             "content-padding scroll-px-[max(1rem,env(safe-area-inset-left))]",
-            "sm:scroll-px-6"
+            "sm:scroll-px-6",
           )}
         >
           {products.map((product, i) => (

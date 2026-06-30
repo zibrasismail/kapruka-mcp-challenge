@@ -3,11 +3,10 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useRef, useEffect, useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Send, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OccasionChips } from "./occasion-chips";
-import { useKeyboardOffset } from "@/lib/hooks/use-visual-viewport";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { ProductCarousel } from "@/components/commerce/product-carousel";
 import { CartPanel } from "@/components/commerce/cart-panel";
@@ -35,8 +34,8 @@ export function ChatInterface() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
-  const keyboardOffset = useKeyboardOffset();
   const isMobile = useIsMobile();
+  const lastScrollHeightRef = useRef(0);
   const cartItems = useCartStore((s) => s.items);
 
   const { messages, sendMessage, status, error } = useChat({
@@ -49,8 +48,13 @@ export function ChatInterface() {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+
+    const nextHeight = el.scrollHeight;
+    if (nextHeight === lastScrollHeightRef.current) return;
+    lastScrollHeightRef.current = nextHeight;
+
     el.scrollTo({
-      top: el.scrollHeight,
+      top: nextHeight,
       behavior: isLoading ? "auto" : "smooth",
     });
   }, [messages, isLoading]);
@@ -258,17 +262,15 @@ export function ChatInterface() {
           )}
         </div>
 
-        <AnimatePresence>
-          {toolProducts.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-            >
-              <ProductCarousel products={toolProducts} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {toolProducts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <ProductCarousel products={toolProducts} />
+          </motion.div>
+        )}
 
         {error && (
           <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">
@@ -277,14 +279,7 @@ export function ChatInterface() {
         )}
       </div>
 
-      <div
-        className="safe-bottom content-padding shrink-0 border-t border-border/50 bg-card/70 py-3 backdrop-blur-xl transition-transform duration-150 sm:py-3.5"
-        style={
-          keyboardOffset > 0
-            ? { transform: `translateY(-${keyboardOffset}px)` }
-            : undefined
-        }
-      >
+      <div className="safe-bottom content-padding shrink-0 border-t border-border/50 bg-card/70 py-3 backdrop-blur-xl sm:py-3.5">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -300,11 +295,9 @@ export function ChatInterface() {
               adjustTextareaHeight();
             }}
             onFocus={() => {
-              requestAnimationFrame(() => {
-                scrollRef.current?.scrollTo({
-                  top: scrollRef.current.scrollHeight,
-                });
-              });
+              window.setTimeout(() => {
+                inputRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+              }, 300);
             }}
             onKeyDown={(e) => {
               if (isMobile) return;
