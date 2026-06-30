@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type SpeechRecognitionCtor = new () => SpeechRecognition;
 
@@ -26,17 +26,18 @@ export function isSpeechRecognitionAvailable(): boolean {
   return !!getSpeechRecognitionCtor();
 }
 
-function subscribeSpeechSupport() {
-  return () => {};
-}
-
-/** Client-only check — false during SSR and on unsupported browsers (e.g. Firefox). */
+/**
+ * Client-only check — false during SSR and on unsupported browsers (e.g. Firefox).
+ * Uses layout effect so desktop Chrome/Edge pick up support before first paint.
+ */
 export function useSpeechSupported(): boolean {
-  return useSyncExternalStore(
-    subscribeSpeechSupport,
-    isSpeechRecognitionAvailable,
-    () => false,
-  );
+  const [supported, setSupported] = useState(false);
+
+  useLayoutEffect(() => {
+    setSupported(isSpeechRecognitionAvailable());
+  }, []);
+
+  return supported;
 }
 
 const ERROR_MESSAGES: Record<string, string> = {

@@ -50,8 +50,7 @@ export function ChatInterface() {
   const [input, setInput] = useState("");
   const [speechLang, setSpeechLang] = useState<SpeechLanguageId>("si-LK");
   const [speechAutoSend, setSpeechAutoSend] = useState(false);
-  const [speechUnavailable, setSpeechUnavailable] = useState(false);
-  const speechSupported = useSpeechSupported() && !speechUnavailable;
+  const speechSupported = useSpeechSupported();
   const isMobile = useIsMobile();
   const lastScrollHeightRef = useRef(0);
   const cartItems = useCartStore((s) => s.items);
@@ -149,15 +148,7 @@ export function ChatInterface() {
     lang: speechLang,
     autoStopOnSilence: speechAutoSend,
     onTranscript: handleSpeechTranscript,
-    onError: (message) => {
-      if (
-        message.includes("not supported") ||
-        message.includes("not available on this device")
-      ) {
-        setSpeechUnavailable(true);
-      }
-      toast.error(message);
-    },
+    onError: (message) => toast.error(message),
     onListeningEnd: handleListeningEnd,
   });
 
@@ -476,16 +467,17 @@ export function ChatInterface() {
             {speechSupported && (
               <Button
                 type="button"
-                variant={isListening ? "default" : "ghost"}
+                variant={isListening ? "default" : "outline"}
                 size="icon"
                 onClick={handleMicClick}
                 disabled={isLoading}
                 aria-label={isListening ? "Stop listening" : "Start voice input"}
                 aria-pressed={isListening}
+                title={isListening ? "Stop voice input" : "Voice input"}
                 className={cn(
-                  "m-1 size-9 shrink-0 rounded-xl sm:m-1.5 sm:size-10",
+                  "m-1 size-9 shrink-0 rounded-xl border-border/60 sm:m-1.5 sm:size-10",
                   isListening &&
-                    "relative bg-destructive text-white hover:bg-destructive/90",
+                    "relative border-destructive/30 bg-destructive text-white hover:bg-destructive/90",
                 )}
               >
                 {isListening ? (
