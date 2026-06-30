@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,9 +25,15 @@ export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
   const total = useCartStore((s) => s.total);
   const itemCount = useCartStore((s) => s.itemCount);
   const count = cartHydrated ? itemCount() : 0;
+  const [open, setOpen] = useState(false);
+
+  const handleCheckout = () => {
+    setOpen(false);
+    onCheckout?.();
+  };
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button
           className={cn(
@@ -113,7 +120,7 @@ export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
                 <span>Total</span>
                 <span className="text-primary">{formatLKR(total())}</span>
               </div>
-              <Button className="w-full" size="lg" onClick={onCheckout}>
+              <Button className="w-full" size="lg" onClick={handleCheckout}>
                 Proceed to Checkout
               </Button>
               <Button variant="ghost" className="mt-2 w-full" onClick={clearCart}>
