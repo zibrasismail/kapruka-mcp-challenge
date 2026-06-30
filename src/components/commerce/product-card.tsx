@@ -17,7 +17,14 @@ export interface ProductData {
   inStock?: boolean;
 }
 
-export function ProductCard({ product }: { product: ProductData; index?: number }) {
+export function ProductCard({
+  product,
+  imagePending = false,
+}: {
+  product: ProductData;
+  index?: number;
+  imagePending?: boolean;
+}) {
   const addItem = useCartStore((s) => s.addItem);
   const [imageError, setImageError] = useState(false);
 
@@ -52,6 +59,11 @@ export function ProductCard({ product }: { product: ProductData; index?: number 
             unoptimized
             onError={() => setImageError(true)}
           />
+        ) : imagePending ? (
+          <div className="flex size-full flex-col items-center justify-center gap-2 bg-muted/80">
+            <span className="size-6 animate-pulse rounded-full bg-muted-foreground/20" />
+            <span className="text-[10px] text-muted-foreground">Loading…</span>
+          </div>
         ) : (
           <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
             No image

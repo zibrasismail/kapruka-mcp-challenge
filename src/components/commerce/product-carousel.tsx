@@ -1,26 +1,67 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductCard, type ProductData } from "./product-card";
 import { cn } from "@/lib/utils";
 
+function mergeProductImages(
+  products: ProductData[],
+  cache: ReadonlyMap<string, string>,
+): ProductData[] {
+  return products.map((p) => ({
+    ...p,
+    image: p.image ?? cache.get(p.id),
+  }));
+}
+
+function productsSignature(products: ProductData[]): string {
+  return products
+    .map((p) => `${p.id}:${p.image ?? ""}:${p.price}:${p.name}`)
+    .join("|");
+}
+
 export function ProductCarousel({ products }: { products: ProductData[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
+  const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollStateRef = useRef({ left: false, right: false });
-  const [displayProducts, setDisplayProducts] = useState(products);
+  const imageCacheRef = useRef(new Map<string, string>());
+  const pendingFetchRef = useRef<string | null>(null);
+
+  const signature = useMemo(() => productsSignature(products), [products]);
+  const productsRef = useRef(products);
+  productsRef.current = products;
+
+  const [displayProducts, setDisplayProducts] = useState(() =>
+    mergeProductImages(products, imageCacheRef.current),
+  );
+  const [isEnriching, setIsEnriching] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   useEffect(() => {
-    setDisplayProducts(products);
+    const currentProducts = productsRef.current;
+    const merged = mergeProductImages(currentProducts, imageCacheRef.current);
+    setDisplayProducts(merged);
 
-    const missingIds = products.filter((p) => !p.image).map((p) => p.id);
-    if (!missingIds.length) return;
+    const missingIds = currentProducts
+      .filter((p) => !p.image && !imageCacheRef.current.has(p.id))
+      .map((p) => p.id);
 
+    if (!missingIds.length) {
+      setIsEnriching(false);
+      pendingFetchRef.current = null;
+      return;
+    }
+
+    const fetchKey = missingIds.join(",");
+    if (pendingFetchRef.current === fetchKey) return;
+
+    pendingFetchRef.current = fetchKey;
     let cancelled = false;
+    setIsEnriching(true);
 
     fetch("/api/enrich-products", {
       method: "POST",
@@ -31,19 +72,26 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
       .then((data: { images?: Record<string, string> } | null) => {
         if (cancelled || !data?.images) return;
 
-        setDisplayProducts((current) =>
-          current.map((p) => ({
-            ...p,
-            image: p.image ?? data.images![p.id],
-          })),
+        for (const [id, url] of Object.entries(data.images)) {
+          imageCacheRef.current.set(id, url);
+        }
+
+        setDisplayProducts(
+          mergeProductImages(productsRef.current, imageCacheRef.current),
         );
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) {
+          setIsEnriching(false);
+          pendingFetchRef.current = null;
+        }
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [products]);
+  }, [signature]);
 
   const updateScrollState = useCallback(() => {
     cancelAnimationFrame(frameRef.current);
@@ -53,7 +101,7 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
 
       const maxScroll = el.scrollWidth - el.clientWidth;
       const nextLeft = el.scrollLeft > 4;
-      const nextRight = el.scrollLeft < maxScroll - 4;
+      const nextRight = maxScroll > 4 && el.scrollLeft < maxScroll - 4;
 
       if (
         scrollStateRef.current.left === nextLeft &&
@@ -68,22 +116,28 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
     });
   }, []);
 
+  const scheduleScrollStateUpdate = useCallback(() => {
+    if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
+    resizeTimerRef.current = setTimeout(updateScrollState, 120);
+  }, [updateScrollState]);
+
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
 
     updateScrollState();
-    el.addEventListener("scroll", updateScrollState, { passive: true });
+    el.addEventListener("scroll", scheduleScrollStateUpdate, { passive: true });
 
-    const observer = new ResizeObserver(updateScrollState);
+    const observer = new ResizeObserver(scheduleScrollStateUpdate);
     observer.observe(el);
 
     return () => {
       cancelAnimationFrame(frameRef.current);
-      el.removeEventListener("scroll", updateScrollState);
+      if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
+      el.removeEventListener("scroll", scheduleScrollStateUpdate);
       observer.disconnect();
     };
-  }, [displayProducts.length, updateScrollState]);
+  }, [signature, scheduleScrollStateUpdate, updateScrollState]);
 
   const scroll = (direction: "left" | "right") => {
     const el = trackRef.current;
@@ -155,7 +209,11 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
           )}
         >
           {displayProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              imagePending={isEnriching && !product.image}
+            />
           ))}
           <div className="w-2 shrink-0 snap-none" aria-hidden />
         </div>
