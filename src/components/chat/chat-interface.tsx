@@ -47,15 +47,11 @@ export function ChatInterface() {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: isLoading ? "auto" : "smooth",
+    });
   }, [messages, isLoading]);
-
-  useEffect(() => {
-    if (keyboardOffset > 0) {
-      const el = scrollRef.current;
-      if (el) el.scrollTo({ top: el.scrollHeight });
-    }
-  }, [keyboardOffset]);
 
   const handleSubmit = async (text?: string) => {
     const msg = (text ?? input).trim();
@@ -272,9 +268,11 @@ export function ChatInterface() {
       </div>
 
       <div
-        className="safe-bottom content-padding shrink-0 border-t border-border/50 bg-card/70 py-3 backdrop-blur-xl sm:py-3.5"
+        className="safe-bottom content-padding shrink-0 border-t border-border/50 bg-card/70 py-3 backdrop-blur-xl transition-transform duration-150 sm:py-3.5"
         style={
-          keyboardOffset > 0 ? { paddingBottom: keyboardOffset } : undefined
+          keyboardOffset > 0
+            ? { transform: `translateY(-${keyboardOffset}px)` }
+            : undefined
         }
       >
         <form

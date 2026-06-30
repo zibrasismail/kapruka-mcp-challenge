@@ -15,8 +15,10 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
     const el = trackRef.current;
     if (!el) return;
     const maxScroll = el.scrollWidth - el.clientWidth;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft < maxScroll - 4);
+    const nextLeft = el.scrollLeft > 4;
+    const nextRight = el.scrollLeft < maxScroll - 4;
+    setCanScrollLeft((prev) => (prev === nextLeft ? prev : nextLeft));
+    setCanScrollRight((prev) => (prev === nextRight ? prev : nextRight));
   }, []);
 
   useEffect(() => {
