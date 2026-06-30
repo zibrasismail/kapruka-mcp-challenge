@@ -279,44 +279,50 @@ export function ChatInterface() {
             e.preventDefault();
             handleSubmit();
           }}
-          className="mx-auto flex max-w-3xl items-end gap-2"
+          className="mx-auto max-w-3xl"
         >
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              adjustTextareaHeight();
-            }}
-            onFocus={() => {
-              window.setTimeout(() => {
-                inputRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-              }, 300);
-            }}
-            onKeyDown={(e) => {
-              if (isMobile) return;
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit();
+          <div className="chat-composer flex min-h-11 items-end rounded-2xl border border-border/60 bg-background shadow-sm transition focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                adjustTextareaHeight();
+              }}
+              onFocus={() => {
+                window.setTimeout(() => {
+                  inputRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+                }, 300);
+              }}
+              onKeyDown={(e) => {
+                if (isMobile) return;
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              placeholder={
+                isMobile
+                  ? "Ask in Sinhala, English…"
+                  : "Type in Sinhala, English, or Tanglish..."
               }
-            }}
-            placeholder="Type in Sinhala, English, or Tanglish..."
-            rows={1}
-            enterKeyHint={isMobile ? "enter" : "send"}
-            className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-border/60 bg-background px-4 py-3 text-base leading-normal outline-none transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/20 sm:text-sm"
-          />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={!input.trim() || isLoading}
-            className="shrink-0 rounded-2xl"
-          >
-            {isLoading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Send className="size-4" />
-            )}
-          </Button>
+              rows={1}
+              enterKeyHint={isMobile ? "enter" : "send"}
+              className="max-h-32 min-h-11 min-w-0 flex-1 resize-none border-0 bg-transparent px-3.5 py-2.5 text-base leading-snug outline-none placeholder:leading-snug placeholder:text-muted-foreground/75 sm:px-4 sm:py-3 sm:text-sm"
+            />
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!input.trim() || isLoading}
+              className="m-1 size-9 shrink-0 rounded-xl sm:m-1.5 sm:size-10"
+            >
+              {isLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Send className="size-4" />
+              )}
+            </Button>
+          </div>
         </form>
         <p className="mx-auto mt-1.5 hidden max-w-3xl text-center text-[10px] text-muted-foreground sm:mt-2 sm:block">
           Powered by Kapruka MCP · Real products · Real checkout

@@ -194,6 +194,10 @@ body::before {
   min-width: 2.75rem;
 }
 
+.chat-composer textarea::placeholder {
+  line-height: 1.35;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;
