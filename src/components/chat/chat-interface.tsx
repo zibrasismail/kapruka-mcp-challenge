@@ -29,6 +29,7 @@ import {
   getToolParts,
   getActiveToolLoads,
   isAssistantTurnInProgress,
+  shouldShowProductCarousel,
 } from "@/lib/chat-utils";
 import { MarkdownMessage } from "./markdown-message";
 import { useCartStore } from "@/lib/store/cart-store";
@@ -50,6 +51,7 @@ export function ChatInterface() {
   const [input, setInput] = useState("");
   const [speechLang, setSpeechLang] = useState<SpeechLanguageId>("si-LK");
   const [speechAutoSend, setSpeechAutoSend] = useState(false);
+  const [checkoutPending, setCheckoutPending] = useState(false);
   const speechSupported = useSpeechSupported();
   const isMobile = useIsMobile();
   const lastScrollHeightRef = useRef(0);
@@ -218,6 +220,7 @@ export function ChatInterface() {
   };
 
   const handleCheckout = () => {
+    setCheckoutPending(true);
     const cartSummary = cartItems
       .map(
         (i) =>
@@ -250,6 +253,18 @@ export function ChatInterface() {
       seen.add(p.id);
       return true;
     });
+  }, [messages]);
+
+  const showProductCarousel = useMemo(() => {
+    if (checkoutPending) return false;
+    if (toolProducts.length === 0) return false;
+    return shouldShowProductCarousel(messages);
+  }, [checkoutPending, messages, toolProducts.length]);
+
+  useEffect(() => {
+    if (shouldShowProductCarousel(messages)) {
+      setCheckoutPending(false);
+    }
   }, [messages]);
 
   return (
@@ -395,7 +410,7 @@ export function ChatInterface() {
           )}
         </div>
 
-        {toolProducts.length > 0 && (
+        {showProductCarousel && (
           <div className="animate-fade-in">
             <ProductCarousel products={toolProducts} />
           </div>

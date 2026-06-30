@@ -133,6 +133,42 @@ export function isToolInFlight(inv: ToolPartInfo): boolean {
   return inv.state === "input-streaming" || inv.state === "input-available";
 }
 
+const CHECKOUT_MESSAGE_RE =
+  /ready to checkout|proceed to checkout|complete the order|checkout my cart/i;
+
+/** Hide product carousel after checkout or order creation until a newer product search. */
+export function shouldShowProductCarousel(messages: UIMessage[]): boolean {
+  let lastProductToolIdx = -1;
+  let lastBlockIdx = -1;
+
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+
+    if (msg.role === "user" && CHECKOUT_MESSAGE_RE.test(getMessageText(msg))) {
+      lastBlockIdx = i;
+    }
+
+    if (msg.role !== "assistant") continue;
+
+    for (const inv of getToolParts(msg)) {
+      if (inv.state !== "output-available") continue;
+
+      if (inv.toolName === "search_products" || inv.toolName === "get_product") {
+        lastProductToolIdx = i;
+      }
+
+      if (inv.toolName === "create_order") {
+        lastBlockIdx = i;
+      }
+    }
+  }
+
+  if (lastProductToolIdx === -1) return false;
+  if (lastBlockIdx === -1) return true;
+
+  return lastProductToolIdx > lastBlockIdx;
+}
+
 /** One loader per tool name — avoids duplicate "Searching Kapruka" rows. */
 export function getActiveToolLoads(message: UIMessage): ToolPartInfo[] {
   const seen = new Set<string>();
