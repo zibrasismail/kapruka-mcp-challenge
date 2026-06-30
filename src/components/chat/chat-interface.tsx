@@ -56,7 +56,6 @@ export function ChatInterface() {
   const isMobile = useIsMobile();
   const lastScrollHeightRef = useRef(0);
   const cartItems = useCartStore((s) => s.items);
-  const addToCart = useCartStore((s) => s.addItem);
 
   useEffect(() => {
     setSpeechLang(getStoredSpeechLang());
