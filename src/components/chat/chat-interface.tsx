@@ -3,10 +3,12 @@
 import { useChat } from "@ai-sdk/react";
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { DefaultChatTransport } from "ai";
-import { Send, Sparkles, Loader2 } from "lucide-react";
+import { Send, Sparkles, Loader2, Mic, MicOff } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { OccasionChips } from "./occasion-chips";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
+import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import { ProductCarousel } from "@/components/commerce/product-carousel";
 import { CartPanel } from "@/components/commerce/cart-panel";
 import { PayLinkCard } from "@/components/commerce/pay-link-card";
@@ -32,10 +34,38 @@ const WELCOME = {
 export function ChatInterface() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const speechBaseRef = useRef("");
+  const speechFinalRef = useRef("");
   const [input, setInput] = useState("");
   const isMobile = useIsMobile();
   const lastScrollHeightRef = useRef(0);
   const cartItems = useCartStore((s) => s.items);
+
+  const handleSpeechTranscript = useCallback((text: string, isFinal: boolean) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    if (isFinal) {
+      speechFinalRef.current = [speechFinalRef.current, trimmed]
+        .filter(Boolean)
+        .join(" ");
+      setInput(
+        [speechBaseRef.current, speechFinalRef.current].filter(Boolean).join(" "),
+      );
+    } else {
+      const committed = [speechBaseRef.current, speechFinalRef.current]
+        .filter(Boolean)
+        .join(" ");
+      setInput([committed, trimmed].filter(Boolean).join(" "));
+    }
+  }, []);
+
+  const { isSupported: isSpeechSupported, isListening, toggle: toggleSpeech, stop: stopSpeech } =
+    useSpeechRecognition({
+      lang: "si-LK",
+      onTranscript: handleSpeechTranscript,
+      onError: (message) => toast.error(message),
+    });
 
   const transport = useMemo(
     () => new DefaultChatTransport({ api: "/api/chat" }),
@@ -67,14 +97,29 @@ export function ChatInterface() {
     return () => cancelAnimationFrame(frame);
   }, [messages, isLoading]);
 
-  const adjustTextareaHeight = () => {
+  const adjustTextareaHeight = useCallback(() => {
     const el = inputRef.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+  }, []);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input, adjustTextareaHeight]);
+
+  const handleMicClick = () => {
+    if (isListening) {
+      toggleSpeech();
+      return;
+    }
+    speechBaseRef.current = input;
+    speechFinalRef.current = "";
+    toggleSpeech();
   };
 
   const handleSubmit = async (text?: string) => {
+    stopSpeech();
     const msg = (text ?? input).trim();
     if (!msg || isLoading) return;
     setInput("");
@@ -286,8 +331,8 @@ export function ChatInterface() {
               ref={inputRef}
               value={input}
               onChange={(e) => {
+                if (isListening) stopSpeech();
                 setInput(e.target.value);
-                adjustTextareaHeight();
               }}
               onFocus={() => {
                 window.setTimeout(() => {
@@ -310,6 +355,31 @@ export function ChatInterface() {
               enterKeyHint={isMobile ? "enter" : "send"}
               className="max-h-32 min-h-11 min-w-0 flex-1 resize-none border-0 bg-transparent px-3.5 py-2.5 text-base leading-snug outline-none placeholder:leading-snug placeholder:text-muted-foreground/75 sm:px-4 sm:py-3 sm:text-sm"
             />
+            {isSpeechSupported && (
+              <Button
+                type="button"
+                variant={isListening ? "default" : "ghost"}
+                size="icon"
+                onClick={handleMicClick}
+                disabled={isLoading}
+                aria-label={isListening ? "Stop listening" : "Speak your message"}
+                aria-pressed={isListening}
+                className={cn(
+                  "m-1 size-9 shrink-0 rounded-xl sm:m-1.5 sm:size-10",
+                  isListening &&
+                    "relative bg-destructive text-white hover:bg-destructive/90",
+                )}
+              >
+                {isListening ? (
+                  <>
+                    <span className="absolute inset-0 animate-ping-soft rounded-xl bg-destructive/40" />
+                    <MicOff className="relative size-4" />
+                  </>
+                ) : (
+                  <Mic className="size-4" />
+                )}
+              </Button>
+            )}
             <Button
               type="submit"
               size="icon"
