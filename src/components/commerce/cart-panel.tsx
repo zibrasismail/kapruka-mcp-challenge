@@ -73,7 +73,14 @@ export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
                   <li key={item.productId} className="flex gap-3 rounded-xl border border-border/50 p-3.5 sm:p-3">
                     <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
                       {item.image ? (
-                        <Image src={item.image} alt={item.name} fill className="object-cover" unoptimized />
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                          referrerPolicy="no-referrer"
+                          unoptimized
+                        />
                       ) : (
                         <div className="flex size-full items-center justify-center text-[10px] text-muted-foreground">
                           No img

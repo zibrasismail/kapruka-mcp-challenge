@@ -10,8 +10,40 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
   const scrollStateRef = useRef({ left: false, right: false });
+  const [displayProducts, setDisplayProducts] = useState(products);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+
+  useEffect(() => {
+    setDisplayProducts(products);
+
+    const missingIds = products.filter((p) => !p.image).map((p) => p.id);
+    if (!missingIds.length) return;
+
+    let cancelled = false;
+
+    fetch("/api/enrich-products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: missingIds }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { images?: Record<string, string> } | null) => {
+        if (cancelled || !data?.images) return;
+
+        setDisplayProducts((current) =>
+          current.map((p) => ({
+            ...p,
+            image: p.image ?? data.images![p.id],
+          })),
+        );
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [products]);
 
   const updateScrollState = useCallback(() => {
     cancelAnimationFrame(frameRef.current);
@@ -51,7 +83,7 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
       el.removeEventListener("scroll", updateScrollState);
       observer.disconnect();
     };
-  }, [products.length, updateScrollState]);
+  }, [displayProducts.length, updateScrollState]);
 
   const scroll = (direction: "left" | "right") => {
     const el = trackRef.current;
@@ -62,7 +94,7 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
     el.scrollBy({ left: amount, behavior: "smooth" });
   };
 
-  if (!products.length) return null;
+  if (!displayProducts.length) return null;
 
   const hasOverflow = canScrollLeft || canScrollRight;
 
@@ -70,7 +102,7 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
     <div className="full-bleed-mobile mt-4 sm:mt-5">
       <div className="content-padding mb-2.5 flex items-center justify-between gap-3">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-xs sm:tracking-wider">
-          Products found · {products.length}
+          Products found · {displayProducts.length}
         </p>
         {hasOverflow && (
           <div className="flex shrink-0 items-center gap-1">
@@ -122,7 +154,7 @@ export function ProductCarousel({ products }: { products: ProductData[] }) {
             "sm:scroll-px-6",
           )}
         >
-          {products.map((product) => (
+          {displayProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
           <div className="w-2 shrink-0 snap-none" aria-hidden />

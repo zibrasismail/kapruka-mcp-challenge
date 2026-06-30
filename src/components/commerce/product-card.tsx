@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Plus, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,11 @@ export interface ProductData {
 
 export function ProductCard({ product }: { product: ProductData; index?: number }) {
   const addItem = useCartStore((s) => s.addItem);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [product.image]);
 
   const handleAdd = () => {
     addItem({
@@ -35,14 +41,16 @@ export function ProductCard({ product }: { product: ProductData; index?: number 
       className="animate-fade-in flex w-[min(68vw,13.5rem)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:w-56"
     >
       <div className="relative aspect-4/5 bg-muted sm:aspect-square">
-        {product.image ? (
+        {product.image && !imageError ? (
           <Image
             src={product.image}
             alt={product.name}
             fill
             className="object-cover"
             sizes="(max-width: 640px) 68vw, 224px"
+            referrerPolicy="no-referrer"
             unoptimized
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="flex size-full items-center justify-center text-xs text-muted-foreground">

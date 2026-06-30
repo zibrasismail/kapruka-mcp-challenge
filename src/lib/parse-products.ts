@@ -1,4 +1,5 @@
 import type { ProductData } from "@/components/commerce/product-card";
+import { extractProductImage, normalizeKaprukaImageUrl } from "@/lib/product-images";
 
 export function parseProductsFromToolResult(text: string): ProductData[] {
   try {
@@ -11,13 +12,14 @@ export function parseProductsFromToolResult(text: string): ProductData[] {
           name: string;
           price?: { amount?: number };
           image_url?: string;
+          images?: unknown[];
           url?: string;
           in_stock?: boolean;
         }) => ({
           id: r.id,
           name: r.name,
           price: r.price?.amount ?? 0,
-          image: r.image_url,
+          image: extractProductImage(r as Record<string, unknown>),
           url: r.url,
           inStock: r.in_stock ?? true,
         }));
@@ -28,7 +30,7 @@ export function parseProductsFromToolResult(text: string): ProductData[] {
           id: json.id,
           name: json.name,
           price: json.price?.amount ?? 0,
-          image: json.images?.[0],
+          image: extractProductImage(json as Record<string, unknown>),
           url: json.url,
           inStock: json.in_stock ?? true,
         },
@@ -62,7 +64,7 @@ export function parseProductsFromToolResult(text: string): ProductData[] {
       name,
       price: priceMatch ? parseFloat(priceMatch[1].replace(/,/g, "")) : 0,
       url: urlMatch?.[1],
-      image: imageMatch?.[1],
+      image: normalizeKaprukaImageUrl(imageMatch?.[1]),
       inStock: !block.toLowerCase().includes("out of stock"),
     });
   }
