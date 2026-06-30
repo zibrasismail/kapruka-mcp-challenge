@@ -31,40 +31,28 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   const active = theme ?? "system";
 
-  const mobileThemes = THEMES.filter((t) => t.value !== "system");
+  const toggleMobileTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
 
   return (
     <>
-      <div
+      <button
+        type="button"
+        onClick={toggleMobileTheme}
+        title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         className={cn(
-          "flex items-center rounded-full border border-border/60 bg-card/80 p-0.5 backdrop-blur-sm sm:hidden",
+          "flex size-9 shrink-0 items-center justify-center rounded-full border border-border/60 bg-card/80 backdrop-blur-sm transition hover:bg-card sm:hidden",
           className
         )}
-        role="group"
-        aria-label="Theme"
       >
-        {mobileThemes.map(({ value, label, icon: Icon }) => {
-          const isActive = active === value || (active === "system" && resolvedTheme === value);
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setTheme(value)}
-              title={label}
-              aria-label={`${label} theme`}
-              aria-pressed={isActive}
-              className={cn(
-                "touch-target flex size-9 items-center justify-center rounded-full transition-all",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <Icon className="size-4" />
-            </button>
-          );
-        })}
-      </div>
+        {resolvedTheme === "dark" ? (
+          <Moon className="size-4" />
+        ) : (
+          <Sun className="size-4" />
+        )}
+      </button>
 
       <div
         className={cn(

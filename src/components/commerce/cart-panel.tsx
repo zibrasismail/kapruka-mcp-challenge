@@ -30,7 +30,7 @@ export function CartPanel({ onCheckout, triggerClassName }: CartPanelProps) {
       <SheetTrigger asChild>
         <button
           className={cn(
-            "touch-target relative flex items-center justify-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-2 text-sm font-medium backdrop-blur-sm transition hover:bg-card sm:px-4",
+            "relative flex size-9 items-center justify-center rounded-full border border-border/60 bg-card/80 text-sm font-medium backdrop-blur-sm transition hover:bg-card sm:size-auto sm:gap-2 sm:px-4 sm:py-2",
             triggerClassName
           )}
           aria-label={`Cart${count > 0 ? `, ${count} items` : ""}`}

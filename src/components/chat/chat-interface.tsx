@@ -6,8 +6,8 @@ import { useRef, useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { OccasionChips } from "./occasion-chips";
+import { useKeyboardOffset } from "@/lib/hooks/use-visual-viewport";
 import { ProductCarousel } from "@/components/commerce/product-carousel";
 import { CartPanel } from "@/components/commerce/cart-panel";
 import { PayLinkCard } from "@/components/commerce/pay-link-card";
@@ -32,7 +32,9 @@ const WELCOME = {
 
 export function ChatInterface() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
+  const keyboardOffset = useKeyboardOffset();
   const cartItems = useCartStore((s) => s.items);
 
   const { messages, sendMessage, status, error } = useChat({
@@ -43,10 +45,17 @@ export function ChatInterface() {
   const isLoading = status === "submitted" || status === "streaming";
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (keyboardOffset > 0) {
+      const el = scrollRef.current;
+      if (el) el.scrollTo({ top: el.scrollHeight });
+    }
+  }, [keyboardOffset]);
 
   const handleSubmit = async (text?: string) => {
     const msg = (text ?? input).trim();
@@ -109,8 +118,10 @@ export function ChatInterface() {
         </div>
       </header>
 
-      <ScrollArea className="chat-scroll min-h-0 flex-1">
-        <div ref={scrollRef} className="mx-auto max-w-3xl px-3 py-4 sm:px-6 sm:py-6">
+      <div
+        ref={scrollRef}
+        className="chat-scroll mx-auto min-h-0 w-full max-w-3xl flex-1 overflow-y-auto overscroll-y-contain px-3 py-4 sm:px-6 sm:py-6"
+      >
           {messages.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -244,10 +255,12 @@ export function ChatInterface() {
               {error.message || "Something went wrong. Please try again."}
             </div>
           )}
-        </div>
-      </ScrollArea>
+      </div>
 
-      <div className="safe-bottom shrink-0 border-t border-border/50 bg-card/70 px-3 py-2.5 backdrop-blur-xl sm:px-6 sm:py-3">
+      <div
+        className="safe-bottom shrink-0 border-t border-border/50 bg-card/70 px-3 py-2.5 backdrop-blur-xl sm:px-6 sm:py-3"
+        style={keyboardOffset > 0 ? { paddingBottom: keyboardOffset } : undefined}
+      >
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -256,8 +269,14 @@ export function ChatInterface() {
           className="mx-auto flex max-w-3xl items-end gap-2"
         >
           <textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onFocus={() => {
+              requestAnimationFrame(() => {
+                scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+              });
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -282,7 +301,7 @@ export function ChatInterface() {
             )}
           </Button>
         </form>
-        <p className="mx-auto mt-1.5 max-w-3xl text-center text-[10px] text-muted-foreground sm:mt-2">
+        <p className="mx-auto mt-1.5 hidden max-w-3xl text-center text-[10px] text-muted-foreground sm:mt-2 sm:block">
           Powered by Kapruka MCP · Real products · Real checkout
         </p>
       </div>

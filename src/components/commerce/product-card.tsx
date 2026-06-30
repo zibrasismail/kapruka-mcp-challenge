@@ -35,7 +35,8 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08 }}
-      className="flex w-[min(82vw,15.5rem)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:w-56"
+      data-product-card
+      className="flex w-[min(72vw,14rem)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:w-56"
     >
       <div className="relative aspect-[4/5] bg-muted sm:aspect-square">
         {product.image ? (
@@ -44,7 +45,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductData; inde
             alt={product.name}
             fill
             className="object-cover"
-            sizes="(max-width: 640px) 82vw, 224px"
+            sizes="(max-width: 640px) 72vw, 224px"
             unoptimized
           />
         ) : (
