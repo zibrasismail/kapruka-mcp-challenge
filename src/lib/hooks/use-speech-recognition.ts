@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 type SpeechRecognitionCtor = new () => SpeechRecognition;
 
@@ -19,6 +19,24 @@ function getSpeechRecognitionCtor(): SpeechRecognitionCtor | undefined {
     webkitSpeechRecognition?: SpeechRecognitionCtor;
   };
   return w.SpeechRecognition ?? w.webkitSpeechRecognition;
+}
+
+/** True when this browser exposes the Web Speech API (Chrome, Edge, Safari). */
+export function isSpeechRecognitionAvailable(): boolean {
+  return !!getSpeechRecognitionCtor();
+}
+
+function subscribeSpeechSupport() {
+  return () => {};
+}
+
+/** Client-only check — false during SSR and on unsupported browsers (e.g. Firefox). */
+export function useSpeechSupported(): boolean {
+  return useSyncExternalStore(
+    subscribeSpeechSupport,
+    isSpeechRecognitionAvailable,
+    () => false,
+  );
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -64,12 +82,8 @@ export function useSpeechRecognition(options?: {
     options?.autoStopOnSilence,
   ]);
 
-  const [isSupported, setIsSupported] = useState(false);
+  const isSupported = useSpeechSupported();
   const [isListening, setIsListening] = useState(false);
-
-  useEffect(() => {
-    setIsSupported(!!getSpeechRecognitionCtor());
-  }, []);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const wantListeningRef = useRef(false);
@@ -217,6 +231,8 @@ export function useSpeechRecognition(options?: {
   }, [finishListening]);
 
   const start = useCallback(() => {
+    if (!isSupported) return;
+
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor) {
       onErrorRef.current?.(
@@ -255,7 +271,7 @@ export function useSpeechRecognition(options?: {
       onErrorRef.current?.("Could not start speech recognition.");
       setIsListening(false);
     }
-  }, [bindRecognition, clearTimers, finishListening, lang, scheduleSilenceCheck]);
+  }, [bindRecognition, clearTimers, finishListening, isSupported, lang, scheduleSilenceCheck]);
 
   const toggle = useCallback(() => {
     if (isListening) stop();

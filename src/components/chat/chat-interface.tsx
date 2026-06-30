@@ -15,6 +15,7 @@ import {
   storeSpeechAutoSend,
   storeSpeechLang,
   useSpeechRecognition,
+  useSpeechSupported,
   type SpeechEndReason,
   type SpeechLanguageId,
 } from "@/lib/hooks/use-speech-recognition";
@@ -49,6 +50,8 @@ export function ChatInterface() {
   const [input, setInput] = useState("");
   const [speechLang, setSpeechLang] = useState<SpeechLanguageId>("si-LK");
   const [speechAutoSend, setSpeechAutoSend] = useState(false);
+  const [speechUnavailable, setSpeechUnavailable] = useState(false);
+  const speechSupported = useSpeechSupported() && !speechUnavailable;
   const isMobile = useIsMobile();
   const lastScrollHeightRef = useRef(0);
   const cartItems = useCartStore((s) => s.items);
@@ -138,7 +141,6 @@ export function ChatInterface() {
   );
 
   const {
-    isSupported: isSpeechSupported,
     isListening,
     start: startSpeech,
     stop: stopSpeech,
@@ -147,7 +149,15 @@ export function ChatInterface() {
     lang: speechLang,
     autoStopOnSilence: speechAutoSend,
     onTranscript: handleSpeechTranscript,
-    onError: (message) => toast.error(message),
+    onError: (message) => {
+      if (
+        message.includes("not supported") ||
+        message.includes("not available on this device")
+      ) {
+        setSpeechUnavailable(true);
+      }
+      toast.error(message);
+    },
     onListeningEnd: handleListeningEnd,
   });
 
@@ -415,7 +425,7 @@ export function ChatInterface() {
           }}
           className="mx-auto max-w-3xl"
         >
-          {isSpeechSupported && (
+          {speechSupported && (
             <SpeechControls
               isListening={isListening}
               speechLang={speechLang}
@@ -463,7 +473,7 @@ export function ChatInterface() {
               enterKeyHint={isMobile ? "enter" : "send"}
               className="max-h-32 min-h-11 min-w-0 flex-1 resize-none border-0 bg-transparent px-3.5 py-2.5 text-base leading-snug outline-none placeholder:leading-snug placeholder:text-muted-foreground/75 sm:px-4 sm:py-3 sm:text-sm"
             />
-            {isSpeechSupported && (
+            {speechSupported && (
               <Button
                 type="button"
                 variant={isListening ? "default" : "ghost"}
